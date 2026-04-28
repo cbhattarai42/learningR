@@ -1,0 +1,118 @@
+<!-- WebR + interactivity loaded in <head> via header.html -->
+<script type="module">
+import { WebR } from 'https://webr.r-wasm.org/latest/webr.mjs';
+
+// ── Boot WebR ───────────────────────────────────────────────────────────────
+const webR = new WebR();
+let webRReady = false;
+
+const statusBar  = document.getElementById('webr-status-bar');
+const statusDot  = document.getElementById('status-dot');
+const statusMsg  = document.getElementById('status-msg');
+
+(async () => {
+  try {
+    await webR.init();
+    webRReady = true;
+    if (statusDot) statusDot.classList.add('ready');
+    if (statusMsg) statusMsg.textContent = '✓ R is ready — click ▶ Run on any example!';
+    // Fade the bar after a moment
+    setTimeout(() => {
+      if (statusBar) statusBar.style.opacity = '0.55';
+    }, 3000);
+  } catch (err) {
+    if (statusMsg) statusMsg.textContent = '✗ Failed to load R: ' + err.message;
+  }
+})();
+
+// ── Utility ─────────────────────────────────────────────────────────────────
+function esc(text) {
+  return String(text)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+
+// ── Core runner ──────────────────────────────────────────────────────────────
+async function runCode(id, btn) {
+  if (!webRReady) {
+    alert('R is still loading — please wait a moment and try again.');
+    return;
+  }
+
+  const editor   = document.getElementById('editor-' + id);
+  const outWrap  = document.getElementById('out-' + id);
+  const textEl   = outWrap.querySelector('.output-text');
+  const plotEl   = outWrap.querySelector('.output-plot');
+
+  const code = editor.value;
+
+  // Show output panel, clear old content
+  outWrap.style.display = 'block';
+  textEl.innerHTML = '<span style="color:#8B857D;font-style:italic;">Running...</span>';
+  if (plotEl) plotEl.innerHTML = '';
+
+  // Disable button while running
+  const origLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⟳ Running...';
+
+  try {
+    const shelter = await new webR.Shelter();
+    let result;
+    try {
+      result = await shelter.captureR(code, {
+        withAutoprint: true,
+        captureStreams: true,
+        captureConditions: true,
+      });
+    } finally {
+      shelter.purge();
+    }
+
+    // ── Text output ──
+    const lines = (result.output || []).map(item => {
+      if (item.type === 'stderr' || item.type === 'error') {
+        return `<span class="r-error">${esc(item.data)}</span>`;
+      } else if (item.type === 'message') {
+        return `<span class="r-warning">${esc(item.data)}</span>`;
+      } else {
+        return esc(item.data);
+      }
+    }).join('\n');
+
+    textEl.innerHTML = lines ||
+      '<span style="color:#8B857D;font-style:italic;">(no text output)</span>';
+
+    // ── Plot output ──
+    if (plotEl && result.images && result.images.length > 0) {
+      for (const img of result.images) {
+        const canvas = document.createElement('canvas');
+        canvas.width  = img.width;
+        canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        plotEl.appendChild(canvas);
+      }
+    }
+
+  } catch (err) {
+    textEl.innerHTML = `<span class="r-error">Error: ${esc(err.message)}</span>`;
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = origLabel;
+  }
+}
+
+// ── Hint toggle ──────────────────────────────────────────────────────────────
+function toggleHint(id) {
+  const box = document.getElementById(id);
+  const btn = box.previousElementSibling; // the .hint-btn
+  const visible = box.style.display === 'block';
+  box.style.display = visible ? 'none' : 'block';
+  btn.textContent = visible ? '💡 Show Hint' : '🙈 Hide Hint';
+}
+
+// ── Expose to global scope so onclick="" attributes work ─────────────────────
+window.runWebR    = runCode;
+window.toggleHint = toggleHint;
+</script>
