@@ -1,0 +1,65 @@
+<!-- ─── Top Navigation Bar ─────────────────────────────────────────── -->
+<nav id="topnav">
+  <div id="topnav-inner">
+
+    <!-- Brand -->
+    <a id="nav-brand" href="#welcome">
+      <span id="nav-brand-r">R</span>
+      <span id="nav-brand-text">Learn R</span>
+    </a>
+
+    <!-- WebR status pill -->
+    <div id="nav-status">
+      <span id="nav-dot" class="nav-dot loading"></span>
+      <span id="nav-status-text">Loading R…</span>
+    </div>
+
+    <!-- Chapter links — desktop -->
+    <div id="nav-links">
+      <a class="nav-link active" href="#ch1" data-ch="ch1">01 Welcome</a>
+      <a class="nav-link" href="#ch2"  data-ch="ch2">02 Arithmetic</a>
+      <a class="nav-link" href="#ch3"  data-ch="ch3">03 Variables</a>
+      <a class="nav-link" href="#ch4"  data-ch="ch4">04 Data Types</a>
+      <a class="nav-link" href="#ch5"  data-ch="ch5">05 Vectors</a>
+      <a class="nav-link" href="#ch6"  data-ch="ch6">06 Functions</a>
+      <a class="nav-link" href="#ch7"  data-ch="ch7">07 Data Frames</a>
+      <a class="nav-link" href="#ch8"  data-ch="ch8">08 Plots</a>
+      <a class="nav-link" href="#ch9"  data-ch="ch9">09 If/Else</a>
+      <a class="nav-link" href="#ch10" data-ch="ch10">10 Loops</a>
+      <a class="nav-link" href="#ch11" data-ch="ch11">11 Write Functions</a>
+      <a class="nav-link" href="#ch12" data-ch="ch12">12 Lists</a>
+    </div>
+
+    <!-- Mobile hamburger -->
+    <button id="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+
+  </div>
+
+  <!-- Mobile dropdown -->
+  <div id="nav-mobile" style="display:none;">
+    <a class="nav-mob-link" href="#ch1"  onclick="closeMobileMenu()">01 — Welcome to R</a>
+    <a class="nav-mob-link" href="#ch2"  onclick="closeMobileMenu()">02 — Arithmetic</a>
+    <a class="nav-mob-link" href="#ch3"  onclick="closeMobileMenu()">03 — Variables</a>
+    <a class="nav-mob-link" href="#ch4"  onclick="closeMobileMenu()">04 — Data Types</a>
+    <a class="nav-mob-link" href="#ch5"  onclick="closeMobileMenu()">05 — Vectors</a>
+    <a class="nav-mob-link" href="#ch6"  onclick="closeMobileMenu()">06 — Functions</a>
+    <a class="nav-mob-link" href="#ch7"  onclick="closeMobileMenu()">07 — Data Frames</a>
+    <a class="nav-mob-link" href="#ch8"  onclick="closeMobileMenu()">08 — Plots</a>
+    <a class="nav-mob-link" href="#ch9"  onclick="closeMobileMenu()">09 — If / Else</a>
+    <a class="nav-mob-link" href="#ch10" onclick="closeMobileMenu()">10 — Loops</a>
+    <a class="nav-mob-link" href="#ch11" onclick="closeMobileMenu()">11 — Write Functions</a>
+    <a class="nav-mob-link" href="#ch12" onclick="closeMobileMenu()">12 — Lists</a>
+  </div>
+</nav>
+
+<script>
+function toggleMobileMenu() {
+  var m = document.getElementById('nav-mobile');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+function closeMobileMenu() {
+  document.getElementById('nav-mobile').style.display = 'none';
+}
+</script>

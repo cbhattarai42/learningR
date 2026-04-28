@@ -1,138 +1,133 @@
 ---
-title: "Learn R — Interactive Beginner Tutorial"
-author: "Your Name"
-date: "`r Sys.Date()`"
+title: "Learn R"
 output:
   html_document:
     self_contained: true
-    toc: true
-    toc_float:
-      collapsed: false
-      smooth_scroll: true
-    toc_depth: 2
+    toc: false
     theme: flatly
     highlight: kate
     css: style.css
     includes:
-      in_header: header.html
-      after_body: footer.html
+      in_header:    header.html
+      before_body:  navbar.html
+      after_body:   footer.html
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
-# Helper function: renders an interactive WebR example block
-# Students can READ the code and click Run — field is not editable
-example_block <- function(code, id, lang = "r") {
-  escaped <- gsub("'", "&#39;", gsub('"', "&quot;", code))
+# ── Helper: read-only example block ───────────────────────────────────────────
+example_block <- function(code, id) {
+  esc <- function(x) gsub('"', "&quot;", gsub("'", "&#39;", x))
   htmltools::HTML(paste0('
 <div class="webr-wrap example-wrap">
   <div class="block-header">
-    <span class="block-tag example-tag">&#9654; Example</span>
+    <span class="block-tag tag-example">&#9654; Example</span>
     <button class="run-btn" onclick="runWebR(\'', id, '\', this)">&#9654; Run</button>
   </div>
-  <textarea id="editor-', id, '" class="code-area" readonly>', escaped, '</textarea>
-  <div id="out-', id, '" class="output-area" style="display:none;">
+  <textarea id="editor-', id, '" class="code-area" readonly>', esc(code), '</textarea>
+  <div id="out-', id, '" class="output-area">
     <div class="output-label">## Output</div>
     <div class="output-text"></div>
     <div class="output-plot"></div>
   </div>
-</div>
-'))
+</div>'))
 }
 
-# Helper function: renders an editable practice block
-# Students WRITE their own code and run it
+# ── Helper: editable practice block ───────────────────────────────────────────
 practice_block <- function(placeholder, id, prompt, hint = NULL) {
-  escaped_ph <- gsub("'", "&#39;", gsub('"', "&quot;", placeholder))
-  hint_html <- if (!is.null(hint)) {
-    paste0('
-    <button class="hint-btn" onclick="toggleHint(\'hint-', id, '\')">&#128161; Show Hint</button>
-    <div id="hint-', id, '" class="hint-box" style="display:none;">', hint, '</div>')
-  } else ""
+  esc <- function(x) gsub('"', "&quot;", gsub("'", "&#39;", x))
+  hint_html <- if (!is.null(hint)) paste0('
+  <button class="hint-btn" id="hbtn-', id, '" onclick="toggleHint(\'', id, '\')">&#128161; Show hint</button>
+  <div class="hint-box" id="hint-', id, '">', hint, '</div>') else ""
 
   htmltools::HTML(paste0('
 <div class="webr-wrap practice-wrap">
   <div class="practice-header">
-    <span class="practice-tag">&#9999;&#65039; Practice</span>
+    <div class="practice-tag">&#9999;&#65039; Practice</div>
     <p class="practice-prompt">', prompt, '</p>
   </div>
-  <div class="block-header practice-code-header">
-    <span class="block-tag practice-code-tag">&#9654; Your Code</span>
-    <button class="run-btn practice-run-btn" onclick="runWebR(\'', id, '\', this)">&#9654; Run Code</button>
+  <div class="block-header practice-code-hdr">
+    <span class="block-tag tag-practice">&#9654; Your code</span>
+    <button class="run-btn pr-btn" onclick="runWebR(\'', id, '\', this)">&#9654; Run</button>
   </div>
-  <textarea id="editor-', id, '" class="code-area practice-area">', escaped_ph, '</textarea>
-  <div id="out-', id, '" class="output-area" style="display:none;">
+  <textarea id="editor-', id, '" class="code-area practice-area">', esc(placeholder), '</textarea>
+  <div id="out-', id, '" class="output-area">
     <div class="output-label">## Output</div>
     <div class="output-text"></div>
     <div class="output-plot"></div>
   </div>', hint_html, '
-</div>
-'))
+</div>'))
 }
-```
 
-```{r echo=FALSE}
-# Display the WebR status banner at the top of the page
+# ── Helper: reading progress bar + scrollspy ───────────────────────────────────
 htmltools::HTML('
-<div id="webr-status-bar">
-  <span class="status-dot" id="status-dot"></span>
-  <span id="status-msg">&#8987; Loading R in your browser — please wait...</span>
-</div>
+<div id="reading-progress"></div>
+<script>
+window.addEventListener("scroll", function() {
+  var el  = document.documentElement;
+  var pct = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100;
+  document.getElementById("reading-progress").style.width = pct + "%";
+});
+</script>
 ')
 ```
 
----
+<div class="chapter" id="ch1">
 
-> **No R installation needed!** This page uses [WebR](https://webr.r-wasm.org/) to run real R code directly in your browser. Click **▶ Run** on any example, and type your own code in the **Practice** blocks.
+## Welcome to R {.chapter-title}
 
----
+<span class="ch-badge">CHAPTER 01</span>
 
-# Chapter 1 — Welcome to R
+**R** is a free, open-source programming language built for statistics, data analysis, and visualization. It is used by millions of researchers, data scientists, and analysts worldwide.
 
-**R** is a programming language designed for statistics, data analysis, and visualization. It is free, open-source, and used by millions of data scientists, researchers, and analysts worldwide.
+This tutorial runs R **directly in your browser** using [WebR](https://webr.r-wasm.org/) — no installation, no account, nothing to download. Click **▶ Run** on any example and the code executes in real time.
 
-Let's write our very first R program — the classic "Hello, World!":
+> 💡 **How it works:** WebR packages the R interpreter as WebAssembly and ships it inside this HTML page. Every code block you run is real R — your results appear instantly, and nothing is sent to any server.
+
+### Your first R program
 
 ```{r results='asis'}
 example_block(
 'print("Hello, World!")
-print("Welcome to R programming!")',
-  id = "ex1_hello"
-)
+print("Welcome to R!")', id = "ex1a")
 ```
 
-R can also be used as a powerful calculator right out of the box:
+### R as a calculator
 
 ```{r results='asis'}
 example_block(
 '2 + 2
 sqrt(144)
 pi
-exp(1)    # Euler\'s number e',
-  id = "ex1_calc"
-)
+exp(1)    # Euler\'s number e
+factorial(10)', id = "ex1b")
 ```
 
 ```{r results='asis'}
 practice_block(
-  placeholder = '# Print your name
-print("Your Name Here")
+  placeholder = '# Print your own name
+print("Your Name")
 
-# Calculate hours in a year
+# How many hours in a year?
 365 * 24',
   id = "pr1",
-  prompt = "Print your own name using <code>print()</code>, then calculate how many hours are in a year (365 × 24).",
-  hint = "Use <code>print(\"Your Name\")</code> with your actual name inside the quotes.
-          Then on a new line, type <code>365 * 24</code>."
+  prompt = "Print your name with <code>print()</code>, then calculate the number of hours in a year (365 × 24).",
+  hint = '<code>print("Alice")</code> — put your name inside quotes. Then on a new line: <code>365 * 24</code>.'
 )
 ```
 
+</div>
+
 ---
 
-# Chapter 2 — Arithmetic
+<div class="chapter" id="ch2">
 
-R supports all standard arithmetic operators:
+## Arithmetic {.chapter-title}
+
+<span class="ch-badge">CHAPTER 02</span>
+
+R supports all standard arithmetic operators. The `#` symbol starts a **comment** — R ignores everything after it on that line.
 
 | Operator | Meaning | Example | Result |
 |---|---|---|---|
@@ -144,8 +139,6 @@ R supports all standard arithmetic operators:
 | `%%` | Modulo (remainder) | `17 %% 5` | 2 |
 | `%/%` | Integer division | `17 %/% 5` | 3 |
 
-> 💡 **Tip:** `#` starts a **comment** — R ignores everything after it on that line. Use comments to explain your code!
-
 ```{r results='asis'}
 example_block(
 '100 + 55       # addition
@@ -153,65 +146,64 @@ example_block(
 12 * 9         # multiplication
 144 / 12       # division
 2 ^ 10         # 2 to the power of 10
-17 %% 5        # remainder: 17 divided by 5
-17 %/% 5       # integer division: whole part only',
-  id = "ex2_arith"
-)
+17 %% 5        # remainder when 17 is divided by 5
+17 %/% 5       # whole-number part of 17 ÷ 5', id = "ex2a")
 ```
 
-R follows standard math order of operations (PEMDAS):
+R follows standard order of operations (PEMDAS). Use parentheses to control the order:
 
 ```{r results='asis'}
 example_block(
-'2 + 3 * 4      # multiplication first → 14
-(2 + 3) * 4    # parentheses first → 20
-10 / 2 + 3     # division first → 8
-10 / (2 + 3)   # parentheses first → 2',
-  id = "ex2_order"
-)
+'2 + 3 * 4       # → 14  (multiplication first)
+(2 + 3) * 4     # → 20  (parentheses first)
+10 / 2 + 3      # → 8   (division first)
+10 / (2 + 3)    # → 2   (parentheses first)', id = "ex2b")
 ```
 
 ```{r results='asis'}
 practice_block(
-  placeholder = '# Area of a circle with radius 7
-# Hint: R has a built-in constant called pi
+  placeholder = '# Area of a circle with radius 7  (pi * r^2)
 pi * 7^2
 
-# How many complete weeks in 100 days?
-100 %/% 7',
+# Complete weeks in 100 days
+100 %/% 7
+
+# Leftover days after those full weeks
+100 %% 7',
   id = "pr2",
-  prompt = "Calculate: (a) the area of a circle with radius 7 (π × r²), and (b) how many complete weeks fit in 100 days.",
-  hint = "R has <code>pi</code> built-in. Area = <code>pi * 7^2</code>.
-          For whole weeks: <code>100 %/% 7</code> (integer division)."
+  prompt = "Calculate: (a) area of a circle with radius 7, (b) how many complete weeks fit in 100 days, (c) leftover days.",
+  hint = 'R has <code>pi</code> built in. Area = <code>pi * 7^2</code>. Full weeks = <code>100 %/% 7</code>. Remainder = <code>100 %% 7</code>.'
 )
 ```
 
+</div>
+
 ---
 
-# Chapter 3 — Variables
+<div class="chapter" id="ch3">
 
-A **variable** stores a value so you can use it later. In R, the assignment operator is `<-`.
+## Variables {.chapter-title}
 
-> 📌 **Convention:** R programmers prefer `<-` over `=`. Variable names are **case-sensitive**: `age` and `Age` are different variables.
+<span class="ch-badge">CHAPTER 03</span>
+
+A **variable** stores a value with a name so you can reuse it. In R the preferred assignment operator is `<-`.
+
+> 📌 **Style tip:** R programmers favour `<-` over `=`. Variable names are **case-sensitive** — `age` and `Age` are different variables. Avoid spaces; use underscores: `first_name`.
 
 ```{r results='asis'}
 example_block(
 'name   <- "Alice"
 age    <- 25
-height <- 5.6    # in feet
+height <- 5.6    # feet
 
-# Print variables
 print(name)
 print(age)
 
-# Combine into sentences
 paste("Name:", name)
-paste(name, "is", age, "years old")',
-  id = "ex3_vars"
-)
+paste(name, "is", age, "years old")', id = "ex3a")
 ```
 
-Variables make calculations readable and reusable:
+Variables make calculations reusable and readable:
 
 ```{r results='asis'}
 example_block(
@@ -223,39 +215,41 @@ cat("Radius:       ", radius, "\\n")
 cat("Area:         ", round(area, 2), "\\n")
 cat("Circumference:", round(circumference, 2), "\\n")
 
-# Update the variable — all calculations use the new value
+# Update the variable — all new calculations use the new value
 radius <- 10
-cat("New area with radius 10:", round(pi * radius^2, 2), "\\n")',
-  id = "ex3_calc"
-)
+cat("New area (radius 10):", round(pi * radius^2, 2), "\\n")', id = "ex3b")
 ```
 
 ```{r results='asis'}
 practice_block(
-  placeholder = '# Create variables for a city and its population
-city       <- "New York"
-population <- 8336817
+  placeholder = '# Store your city and its population
+city       <- "Tokyo"
+population <- 13960000
 
-# Print a sentence like: "New York has a population of 8336817"
+# Print a sentence using paste()
 print(paste(city, "has a population of", population))',
   id = "pr3",
-  prompt = "Create variables for a city name and its population. Then print: <em>\"[City] has a population of [number]\"</em>.",
-  hint = "Text goes in quotes: <code>city &lt;- \"Tokyo\"</code><br>
-          Numbers don't need quotes: <code>population &lt;- 13960000</code><br>
-          Combine with: <code>paste(city, \"has a population of\", population)</code>"
+  prompt = 'Create variables for a city name and population. Print: <em>"[City] has a population of [number]"</em>.',
+  hint = 'Text needs quotes: <code>city &lt;- "London"</code>. Numbers do not: <code>population &lt;- 8982000</code>. Combine with <code>paste()</code>.'
 )
 ```
 
+</div>
+
 ---
 
-# Chapter 4 — Data Types
+<div class="chapter" id="ch4">
 
-R has several core data types:
+## Data Types {.chapter-title}
+
+<span class="ch-badge">CHAPTER 04</span>
+
+Every value in R has a type. Understanding types helps you avoid errors when working with real data.
 
 | Type | Description | Example |
 |---|---|---|
 | `numeric` | Numbers (decimals OK) | `3.14`, `42` |
-| `integer` | Whole numbers only | `5L`, `100L` |
+| `integer` | Whole numbers | `5L`, `100L` |
 | `character` | Text strings | `"hello"` |
 | `logical` | TRUE or FALSE | `TRUE`, `FALSE` |
 | `NA` | Missing value | `NA` |
@@ -265,7 +259,7 @@ example_block(
 'x <- 3.14
 y <- "hello"
 z <- TRUE
-n <- 5L       # the L makes it an integer
+n <- 5L       # the L suffix makes it an integer
 
 class(x)      # "numeric"
 class(y)      # "character"
@@ -274,31 +268,27 @@ class(n)      # "integer"
 
 is.numeric(x)
 is.character(y)
-is.logical(z)',
-  id = "ex4_types"
-)
+is.logical(z)', id = "ex4a")
 ```
 
-You can convert between types using `as.*()` functions:
+Convert between types with `as.*()` functions:
 
 ```{r results='asis'}
 example_block(
-'as.numeric("3.14")    # string → number
-as.character(100)     # number → string
-as.logical(1)         # 1 → TRUE
-as.logical(0)         # 0 → FALSE
-as.integer(3.99)      # decimal → integer (truncates, not rounds!)
+'as.numeric("3.14")    # string  → number: 3.14
+as.character(100)     # number  → string: "100"
+as.logical(1)         # 1       → TRUE
+as.logical(0)         # 0       → FALSE
+as.integer(3.99)      # decimal → integer (truncates, not rounds!): 3
 
-# NA — the missing value
+# NA — the missing value sentinel
 score <- NA
-is.na(score)          # check if value is missing',
-  id = "ex4_convert"
-)
+is.na(score)', id = "ex4b")
 ```
 
 ```{r results='asis'}
 practice_block(
-  placeholder = '# Create one variable of each type
+  placeholder = '# One variable of each core type
 my_number  <- 42
 my_text    <- "hello R"
 my_boolean <- TRUE
@@ -308,160 +298,173 @@ class(my_number)
 class(my_text)
 class(my_boolean)
 
-# Convert my_number to character
-as.character(my_number)',
+# Convert my_number to character, then check its class
+converted <- as.character(my_number)
+class(converted)',
   id = "pr4",
-  prompt = "Create a numeric, character, and logical variable. Use <code>class()</code> to verify each type, then convert the number to a character string.",
-  hint = "Try <code>my_num &lt;- 42</code>, <code>my_text &lt;- \"hello\"</code>, <code>my_bool &lt;- TRUE</code>.
-          Then call <code>class()</code> on each, and <code>as.character(my_num)</code>."
+  prompt = "Create a numeric, character, and logical variable. Use <code>class()</code> to verify each, then convert the number to character and confirm it changed.",
+  hint = 'After <code>as.character(42)</code> the class becomes <code>"character"</code>, not <code>"numeric"</code>.'
 )
 ```
 
+</div>
+
 ---
 
-# Chapter 5 — Vectors
+<div class="chapter" id="ch5">
 
-A **vector** is R's most fundamental data structure — an ordered list of values, all of the same type. Create vectors with `c()` (short for "combine").
+## Vectors {.chapter-title}
 
-> Almost everything in R is a vector — even a single number like `42` is a length-1 vector. This is what makes R so powerful for data analysis.
+<span class="ch-badge">CHAPTER 05</span>
+
+A **vector** is R's core data structure — an ordered collection of values, all the same type. Create one with `c()` (combine). Even a single number like `42` is a vector of length 1.
 
 ```{r results='asis'}
 example_block(
 'scores <- c(85, 92, 78, 95, 88)
 
 length(scores)      # number of elements
-scores[1]           # first element — R starts counting at 1!
+scores[1]           # first element — R starts at 1, not 0
 scores[3]           # third element
 scores[c(1, 3)]     # first and third
 scores[2:4]         # elements 2 through 4
-scores[-1]          # everything except the first
+scores[-1]          # everything EXCEPT the first
 
 # Named vector
 grades <- c(Alice = 90, Bob = 85, Carol = 92)
-grades["Alice"]',
-  id = "ex5_vec"
-)
+grades["Alice"]', id = "ex5a")
 ```
 
-Vector operations apply to **every element at once** — this is called **vectorization**:
+**Vectorisation** — operations apply to every element at once:
 
 ```{r results='asis'}
 example_block(
 'temps_f <- c(72, 68, 75, 80, 71, 77, 73)
 
-# Convert all Fahrenheit temps to Celsius in one line!
+# Convert ALL temps from Fahrenheit to Celsius in one line!
 (temps_f - 32) * 5/9
 
-# Filter with conditions
+# Filter with a condition
 temps_f[temps_f > 74]
-temps_f[temps_f >= 71 & temps_f <= 77]
 
-# Useful sequences
-1:10
-seq(0, 1, by = 0.25)
-rep("A", 5)',
-  id = "ex5_ops"
-)
+# Combine conditions
+temps_f[temps_f >= 72 & temps_f <= 77]
+
+# Useful sequence helpers
+1:10                  # integers 1 to 10
+seq(0, 1, by = 0.25) # 0.00 0.25 0.50 0.75 1.00
+rep("A", 5)          # "A" "A" "A" "A" "A"', id = "ex5b")
 ```
 
 ```{r results='asis'}
 practice_block(
-  placeholder = '# Create a vector of 5 exam scores
+  placeholder = '# Five exam scores
 scores <- c(76, 88, 92, 65, 84)
 
 # 1. Print the 2nd score
 scores[2]
 
-# 2. Print all scores above 80
+# 2. All scores above 80
 scores[scores > 80]
 
 # 3. Reverse the vector
-rev(scores)',
+rev(scores)
+
+# 4. Sorted from lowest to highest
+sort(scores)',
   id = "pr5",
-  prompt = "Create a vector of 5 exam scores. Then: (1) print the 2nd score, (2) print all scores above 80, (3) print the vector in reverse using <code>rev()</code>.",
-  hint = "<code>scores[2]</code> → 2nd element<br>
-          <code>scores[scores &gt; 80]</code> → filter condition<br>
-          <code>rev(scores)</code> → reverse"
+  prompt = "Create a vector of 5 scores. Print: (1) the 2nd element, (2) all scores above 80, (3) the vector reversed, (4) sorted low→high.",
+  hint = 'Index: <code>scores[2]</code>. Filter: <code>scores[scores &gt; 80]</code>. Reverse: <code>rev(scores)</code>. Sort: <code>sort(scores)</code>.'
 )
 ```
 
+</div>
+
 ---
 
-# Chapter 6 — Built-in Functions
+<div class="chapter" id="ch6">
 
-R ships with hundreds of built-in functions. Here are the essentials for numeric data:
+## Built-in Functions {.chapter-title}
 
-| Function | Description |
+<span class="ch-badge">CHAPTER 06</span>
+
+R ships with hundreds of built-in functions. The most useful for numeric analysis:
+
+| Function | What it does |
 |---|---|
-| `sum(x)` | Sum of all values |
+| `sum(x)` | Total of all values |
 | `mean(x)` | Average |
 | `median(x)` | Middle value |
 | `min(x)` / `max(x)` | Smallest / largest |
 | `sd(x)` | Standard deviation |
 | `round(x, n)` | Round to n decimal places |
-| `sort(x)` | Sort values |
-| `summary(x)` | Quick statistical summary |
+| `sort(x)` | Sort ascending |
+| `summary(x)` | Five-number summary |
+| `nchar(x)` | Number of characters in a string |
+| `paste(...)` | Join strings together |
 
 ```{r results='asis'}
 example_block(
-'test_scores <- c(85, 92, 78, 95, 88, 74, 91, 83, 76, 89)
+'scores <- c(85, 92, 78, 95, 88, 74, 91, 83, 76, 89)
 
-cat("Count:   ", length(test_scores), "\\n")
-cat("Sum:     ", sum(test_scores), "\\n")
-cat("Mean:    ", mean(test_scores), "\\n")
-cat("Median:  ", median(test_scores), "\\n")
-cat("Min:     ", min(test_scores), "\\n")
-cat("Max:     ", max(test_scores), "\\n")
-cat("Std Dev: ", round(sd(test_scores), 2), "\\n")
+cat("Count:   ", length(scores), "\\n")
+cat("Sum:     ", sum(scores), "\\n")
+cat("Mean:    ", mean(scores), "\\n")
+cat("Median:  ", median(scores), "\\n")
+cat("Min/Max: ", min(scores), "/", max(scores), "\\n")
+cat("Std Dev: ", round(sd(scores), 2), "\\n")
 
-summary(test_scores)   # all in one!',
-  id = "ex6_stats"
-)
+summary(scores)    # one-line overview', id = "ex6a")
 ```
-
-R also has great string functions:
 
 ```{r results='asis'}
 example_block(
 'msg <- "Hello, R World!"
 
-nchar(msg)                        # character count
-toupper(msg)                      # uppercase
-tolower(msg)                      # lowercase
-substring(msg, 1, 5)             # extract "Hello"
-gsub("World", "Student", msg)    # replace text
-strsplit("a,b,c,d", ",")        # split by comma
-paste("Score:", 95)              # join text and number
-paste0("report_", "2024", ".csv") # join without spaces',
-  id = "ex6_strings"
-)
+nchar(msg)                         # character count
+toupper(msg)                       # ALL CAPS
+tolower(msg)                       # all lower
+substring(msg, 1, 5)              # extract first 5 chars
+gsub("World", "Student", msg)     # find and replace
+strsplit("a,b,c,d", ",")         # split on comma
+paste("Score:", 95)               # join text + number
+paste0("report_", "2024", ".csv") # join without any space', id = "ex6b")
 ```
 
 ```{r results='asis'}
 practice_block(
   placeholder = '# Monthly rainfall (mm) for a city
-rain_mm <- c(42, 35, 28, 15, 8, 3, 1, 4, 18, 40, 52, 48)
+rain <- c(42, 35, 28, 15, 8, 3, 1, 4, 18, 40, 52, 48)
 
-# Total annual rainfall
-sum(rain_mm)
+# 1. Total annual rainfall
+sum(rain)
 
-# Driest and wettest month values
-min(rain_mm)
-max(rain_mm)
+# 2. Driest and wettest months (values)
+min(rain)
+max(rain)
 
-# Average monthly rainfall (rounded to 1 decimal)
-round(mean(rain_mm), 1)',
+# 3. Average monthly rainfall, 1 decimal place
+round(mean(rain), 1)
+
+# 4. Full statistical summary
+summary(rain)',
   id = "pr6",
-  prompt = "Using the rainfall vector below, find: (1) total annual rainfall, (2) driest and wettest month values, (3) average monthly rainfall rounded to 1 decimal.",
-  hint = "Apply each function directly to <code>rain_mm</code>: <code>sum(rain_mm)</code>, <code>min(rain_mm)</code>, <code>max(rain_mm)</code>, <code>round(mean(rain_mm), 1)</code>"
+  prompt = "Analyse the monthly rainfall vector: find total, min, max, average (1 d.p.), and print the full summary.",
+  hint = 'Pass <code>rain</code> directly into each function: <code>sum(rain)</code>, <code>min(rain)</code>, <code>round(mean(rain), 1)</code>, <code>summary(rain)</code>.'
 )
 ```
 
+</div>
+
 ---
 
-# Chapter 7 — Data Frames
+<div class="chapter" id="ch7">
 
-A **data frame** is R's version of a spreadsheet table. Rows = observations, columns = variables. Each column can hold a different type, but all must have the same length.
+## Data Frames {.chapter-title}
+
+<span class="ch-badge">CHAPTER 07</span>
+
+A **data frame** is R's table structure — rows are observations, columns are variables. Each column can hold a different type, but all columns must have the same length. Think of it as a spreadsheet you can program.
 
 ```{r results='asis'}
 example_block(
@@ -472,16 +475,14 @@ example_block(
   passed = c(TRUE, TRUE, TRUE, TRUE, TRUE)
 )
 
-students           # view the table
-nrow(students)     # number of rows
-ncol(students)     # number of columns
+students           # view the whole table
+nrow(students)     # rows
+ncol(students)     # columns
 names(students)    # column names
-str(students)      # structure overview',
-  id = "ex7_df"
-)
+str(students)      # structure', id = "ex7a")
 ```
 
-Access rows, columns, and filter data:
+Access and filter data:
 
 ```{r results='asis'}
 example_block(
@@ -491,17 +492,17 @@ example_block(
   score = c(88, 74, 92, 81, 95)
 )
 
-students$name            # a column using $
-students$score
-students[1, ]            # first row (all columns)
-students[, "score"]      # score column by name
-students[3, "name"]      # Carolâ€™s name specifically
+students$name              # one column with $
+students[1, ]              # first row (all columns)
+students[, "score"]        # score column by name
+students[3, "name"]        # single cell
 
-# Filter: only students who scored >= 88
+# Filter rows
 students[students$score >= 88, ]
-mean(students$score)',
-  id = "ex7_access"
-)
+
+# Add a new column
+students$grade <- ifelse(students$score >= 90, "A", "B")
+students', id = "ex7b")
 ```
 
 ```{r results='asis'}
@@ -513,30 +514,34 @@ practice_block(
   pages  = c(310, 688, 328, 311)
 )
 
-# View the data frame
+# 1. View the table
 books
 
-# Find the longest book (pages)
+# 2. Longest book (pages)
 max(books$pages)
 
-# Average pages across all books
-round(mean(books$pages), 1)
+# 3. Books published before 1950
+books[books$year < 1950, ]
 
-# Filter: books published before 1950
-books[books$year < 1950, ]',
+# 4. Average page count
+round(mean(books$pages), 0)',
   id = "pr7",
-  prompt = "A book data frame is pre-filled. View it, find the longest book (max pages), calculate average pages, and filter books published before 1950.",
-  hint = "Access a column: <code>books$pages</code><br>
-          Max pages: <code>max(books$pages)</code><br>
-          Filter by year: <code>books[books$year &lt; 1950, ]</code>"
+  prompt = "A books data frame is ready. View it, find the longest book, filter pre-1950 titles, and calculate average page count.",
+  hint = 'Access a column: <code>books$pages</code>. Filter: <code>books[books$year &lt; 1950, ]</code> — the trailing comma keeps ALL columns.'
 )
 ```
 
+</div>
+
 ---
 
-# Chapter 8 — Visualization
+<div class="chapter" id="ch8">
 
-R has powerful built-in plotting. Create professional charts in 1–2 lines of code.
+## Visualization {.chapter-title}
+
+<span class="ch-badge">CHAPTER 08</span>
+
+R's built-in `plot()` family lets you create publication-quality charts in one or two lines. Plots render right below the code block — just like RStudio.
 
 ```{r results='asis'}
 example_block(
@@ -548,34 +553,30 @@ plot(x, y,
      xlab = "x",
      ylab = "x^2",
      col  = "steelblue",
-     pch  = 16,
-     type = "b",    # both points and lines
-     lwd  = 2)',
-  id = "ex8_scatter"
-)
+     pch  = 16,       # filled circles
+     type = "b",      # both points and lines
+     lwd  = 2)', id = "ex8a")
 ```
 
 ```{r results='asis'}
 example_block(
-'par(mfrow = c(1, 2))   # 1 row, 2 columns of plots
+'par(mfrow = c(1, 2))   # side-by-side plots
 
 # Bar chart
 sales <- c(Jan=120, Feb=95, Mar=140, Apr=160, May=130)
 barplot(sales, col = "coral", main = "Monthly Sales",
         ylab = "Units", las = 2)
 
-# Histogram of simulated data
+# Histogram
 set.seed(42)
 heights <- rnorm(200, mean = 170, sd = 10)
 hist(heights, col = "skyblue", main = "Height Distribution",
-     xlab = "Height (cm)", breaks = 15)',
-  id = "ex8_bar"
-)
+     xlab = "Height (cm)", breaks = 15)', id = "ex8b")
 ```
 
 ```{r results='asis'}
 practice_block(
-  placeholder = '# Monthly average temperatures (Jan-Dec)
+  placeholder = '# Monthly average temperatures Jan-Dec
 months <- 1:12
 temps  <- c(35, 38, 48, 58, 67, 76, 81, 79, 71, 60, 49, 38)
 
@@ -591,15 +592,327 @@ plot(months, temps,
 axis(1, at = 1:12, labels = month.abb)
 points(months, temps, pch = 16, col = "tomato")',
   id = "pr8",
-  prompt = "Modify the temperature data for your own city and change the line color. Try color names like <code>\"steelblue\"</code>, <code>\"forestgreen\"</code>, or <code>\"darkorchid\"</code>.",
-  hint = "Change the values in <code>temps</code> to your city's temperatures.
-          Change <code>col = \"tomato\"</code> to any R color name.
-          Update <code>main</code> to your city's name."
+  prompt = "Edit the temperatures for your own city and change the line color. Try <code>\"steelblue\"</code>, <code>\"forestgreen\"</code>, or <code>\"darkorchid\"</code>.",
+  hint = 'Change the values in <code>temps</code> and set <code>col</code> to any R color name. Update <code>main</code> to your city name.'
 )
 ```
 
+</div>
+
 ---
 
-> 🎉 **Congratulations!** You've covered the core building blocks of R: output, arithmetic, variables, types, vectors, functions, data frames, and plotting. 
+<div class="chapter" id="ch9">
+
+## If / Else {.chapter-title}
+
+<span class="ch-badge">CHAPTER 09</span>
+
+**Conditional statements** let your code make decisions. R's syntax is `if (condition) { ... } else { ... }`.
+
+```{r results='asis'}
+example_block(
+'score <- 85
+
+if (score >= 90) {
+  print("Grade: A")
+} else if (score >= 80) {
+  print("Grade: B")
+} else if (score >= 70) {
+  print("Grade: C")
+} else {
+  print("Grade: F")
+}', id = "ex9a")
+```
+
+`ifelse()` is a vectorised shorthand — it works on entire vectors at once:
+
+```{r results='asis'}
+example_block(
+'scores <- c(92, 74, 85, 61, 78, 95, 55)
+
+# Classify every score in one line
+result <- ifelse(scores >= 70, "Pass", "Fail")
+result
+
+# Can be chained (nested) for multiple categories
+grade <- ifelse(scores >= 90, "A",
+         ifelse(scores >= 80, "B",
+         ifelse(scores >= 70, "C", "F")))
+grade', id = "ex9b")
+```
+
+```{r results='asis'}
+practice_block(
+  placeholder = '# BMI calculator
+weight_kg <- 70
+height_m  <- 1.75
+
+bmi <- weight_kg / height_m^2
+cat("BMI:", round(bmi, 1), "\\n")
+
+# Classify the BMI
+if (bmi < 18.5) {
+  cat("Category: Underweight\\n")
+} else if (bmi < 25) {
+  cat("Category: Normal weight\\n")
+} else if (bmi < 30) {
+  cat("Category: Overweight\\n")
+} else {
+  cat("Category: Obese\\n")
+}',
+  id = "pr9",
+  prompt = "Change <code>weight_kg</code> and <code>height_m</code> to your own values (or make some up). Run the BMI calculator and see which category appears.",
+  hint = 'BMI formula: <code>weight_kg / height_m^2</code>. Change the numbers and re-run — try values that would land in different categories.'
+)
+```
+
+</div>
+
+---
+
+<div class="chapter" id="ch10">
+
+## Loops {.chapter-title}
+
+<span class="ch-badge">CHAPTER 10</span>
+
+Loops let you repeat code. R has two main types: `for` (repeat a fixed number of times) and `while` (repeat until a condition is false).
+
+> 💡 **R tip:** Because R is vectorised, you often don't *need* a loop — `scores * 2` doubles every element instantly. Use loops when each iteration needs to depend on the previous one, or when you are building up a result step by step.
+
+```{r results='asis'}
+example_block(
+'# for loop — iterate over a vector
+fruits <- c("apple", "banana", "cherry")
+
+for (fruit in fruits) {
+  cat("I like", fruit, "\\n")
+}
+
+# for loop with an index
+for (i in 1:5) {
+  cat("Square of", i, "is", i^2, "\\n")
+}', id = "ex10a")
+```
+
+```{r results='asis'}
+example_block(
+'# while loop — keep going until condition fails
+count <- 1
+while (count <= 5) {
+  cat("Count:", count, "\\n")
+  count <- count + 1   # IMPORTANT: update the counter!
+}
+
+# Building a result with a loop
+total <- 0
+for (n in 1:10) {
+  total <- total + n
+}
+cat("Sum of 1 to 10:", total, "\\n")  # same as sum(1:10)', id = "ex10b")
+```
+
+```{r results='asis'}
+practice_block(
+  placeholder = '# FizzBuzz — a classic coding exercise
+# For numbers 1-20:
+#   if divisible by 3 AND 5: print "FizzBuzz"
+#   if divisible by 3 only:  print "Fizz"
+#   if divisible by 5 only:  print "Buzz"
+#   otherwise:               print the number
+
+for (i in 1:20) {
+  if (i %% 15 == 0) {
+    cat("FizzBuzz\\n")
+  } else if (i %% 3 == 0) {
+    cat("Fizz\\n")
+  } else if (i %% 5 == 0) {
+    cat("Buzz\\n")
+  } else {
+    cat(i, "\\n")
+  }
+}',
+  id = "pr10",
+  prompt = "Run the FizzBuzz loop, then modify it — try changing the range from 1:20 to 1:50, or change the divisors from 3 and 5 to different numbers.",
+  hint = '<code>%%</code> gives the remainder. <code>i %% 3 == 0</code> means i is divisible by 3. Check the combined condition (15 = 3×5) first!'
+)
+```
+
+</div>
+
+---
+
+<div class="chapter" id="ch11">
+
+## Write Your Own Functions {.chapter-title}
+
+<span class="ch-badge">CHAPTER 11</span>
+
+**Functions** let you package reusable code with a name. Once defined, call them as many times as you like. The syntax is:
+
+```
+my_function <- function(arg1, arg2) {
+  # code here
+  return(result)   # or just the last expression
+}
+```
+
+```{r results='asis'}
+example_block(
+'# Define a function
+greet <- function(name) {
+  paste("Hello,", name, "!")
+}
+
+greet("Alice")
+greet("Bob")
+greet("R Student")
+
+# Function with multiple arguments and a default value
+power <- function(base, exponent = 2) {
+  base ^ exponent
+}
+
+power(3)       # uses default exponent = 2 → 9
+power(3, 3)    # override: 3^3 = 27
+power(2, 10)   # 2^10 = 1024', id = "ex11a")
+```
+
+```{r results='asis'}
+example_block(
+'# A useful real-world function
+bmi_calc <- function(weight_kg, height_m) {
+  bmi      <- weight_kg / height_m^2
+  category <- ifelse(bmi < 18.5, "Underweight",
+               ifelse(bmi < 25, "Normal",
+               ifelse(bmi < 30, "Overweight", "Obese")))
+  cat("BMI:", round(bmi, 1), "—", category, "\\n")
+}
+
+bmi_calc(70, 1.75)
+bmi_calc(55, 1.60)
+bmi_calc(95, 1.80)
+
+# Functions that work on vectors
+celsius_to_f <- function(c) c * 9/5 + 32
+
+temps_c <- c(0, 20, 37, 100)
+celsius_to_f(temps_c)', id = "ex11b")
+```
+
+```{r results='asis'}
+practice_block(
+  placeholder = '# Write a function that converts km to miles
+km_to_miles <- function(km) {
+  km * 0.621371
+}
+
+km_to_miles(10)
+km_to_miles(42.195)   # marathon distance
+
+# Now write a grade() function that returns
+# "A", "B", "C", or "F" based on a numeric score
+grade <- function(score) {
+  if (score >= 90) return("A")
+  if (score >= 80) return("B")
+  if (score >= 70) return("C")
+  return("F")
+}
+
+grade(95)
+grade(82)
+grade(65)',
+  id = "pr11",
+  prompt = "Run the two functions, then write a third function of your own — something that takes an input and returns a transformed output.",
+  hint = 'Any transformation works: <code>double &lt;- function(x) x * 2</code>, or a tip calculator: <code>tip &lt;- function(bill, pct = 0.18) bill * pct</code>.'
+)
+```
+
+</div>
+
+---
+
+<div class="chapter" id="ch12">
+
+## Lists {.chapter-title}
+
+<span class="ch-badge">CHAPTER 12</span>
+
+A **list** is like a vector, but each element can be a *different* type — including other vectors, data frames, or even other lists. Lists are R's most flexible data structure.
+
+```{r results='asis'}
+example_block(
+'# A list can hold mixed types
+person <- list(
+  name    = "Alice",
+  age     = 25,
+  scores  = c(88, 92, 85),
+  active  = TRUE
+)
+
+person            # view the whole list
+length(person)    # 4 elements
+
+# Access elements — three equivalent ways
+person$name
+person[["age"]]
+person[[3]]       # the scores vector', id = "ex12a")
+```
+
+```{r results='asis'}
+example_block(
+'# A list of student records (like a mini database)
+students <- list(
+  list(name = "Alice", score = 88, grade = "B"),
+  list(name = "Bob",   score = 95, grade = "A"),
+  list(name = "Carol", score = 74, grade = "C")
+)
+
+# Access nested data
+students[[2]]$name      # "Bob"
+students[[1]]$score     # 88
+
+# Loop over a list
+for (s in students) {
+  cat(s$name, "scored", s$score, "— grade", s$grade, "\\n")
+}
+
+# lapply: apply a function to every element
+scores <- lapply(students, function(s) s$score)
+unlist(scores)          # convert list → vector', id = "ex12b")
+```
+
+```{r results='asis'}
+practice_block(
+  placeholder = '# Create a list representing a book
+book <- list(
+  title  = "The Hitchhiker\'s Guide",
+  author = "Douglas Adams",
+  year   = 1979,
+  genres = c("sci-fi", "comedy", "adventure"),
+  rating = 4.8
+)
+
+# 1. Print the title
+book$title
+
+# 2. Print all genres
+book$genres
+
+# 3. Add a new field: number of pages
+book$pages <- 193
+book$pages
+
+# 4. Print all field names
+names(book)',
+  id = "pr12",
+  prompt = "Create a list for a book (or film, or album). Add fields, access nested data, and use <code>names()</code> to see all keys.",
+  hint = 'Add a new field any time: <code>book$pages &lt;- 193</code>. Access nested: <code>book$genres[1]</code> gets the first genre.'
+)
+```
+
+> 🎉 **You have completed all 12 chapters!** You now know R's core building blocks: output, arithmetic, variables, data types, vectors, functions, data frames, plots, conditionals, loops, custom functions, and lists. These fundamentals will take you far.
 >
-> **Next steps:** Explore [tidyverse](https://www.tidyverse.org/), [ggplot2](https://ggplot2.tidyverse.org/), and real datasets on [Kaggle](https://www.kaggle.com/datasets).
+> **What's next?** Explore [tidyverse](https://www.tidyverse.org/) for modern data wrangling, [ggplot2](https://ggplot2.tidyverse.org/) for beautiful charts, and real datasets on [Kaggle](https://kaggle.com/datasets).
+
+</div>
