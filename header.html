@@ -4,35 +4,75 @@ import { WebR } from 'https://webr.r-wasm.org/latest/webr.mjs';
 const webR = new WebR();
 let webRReady = false;
 
-/* ── Boot ─────────────────────────────────────────────────────── */
+/* ── Packages to pre-install on boot ─────────────────────────────────────
+   All packages listed here are downloaded once from r-wasm.org when the
+   page first loads. After that they live in the browser's virtual FS and
+   are available instantly via library() — no per-block install needed.
+──────────────────────────────────────────────────────────────────────── */
+const PACKAGES = [
+  'dplyr',
+  'ggplot2',
+  'tidyr',
+  'readr',
+  'stringr',
+  'purrr',
+  'tibble',
+  'forcats',
+  'scales',
+  'broom'
+];
+
+/* ── Status helpers ───────────────────────────────────────────────────── */
+function setStatus(msg, dotClass) {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-txt');
+  if (dot && dotClass) dot.className = 'sdot ' + dotClass;
+  if (txt) txt.textContent = msg;
+}
+
+/* ── Boot sequence ────────────────────────────────────────────────────── */
 (async () => {
   try {
+    setStatus('Starting R…', 'loading');
     await webR.init();
+
+    /* Create virtual upload directory for Ch 22 */
+    try { await webR.FS.mkdir('/uploads'); } catch(e) {}
+
+    /* Install packages one-by-one, updating status bar */
+    for (let i = 0; i < PACKAGES.length; i++) {
+      const pkg = PACKAGES[i];
+      setStatus(`Installing ${pkg} (${i+1}/${PACKAGES.length})…`, 'loading');
+      try {
+        await webR.evalRVoid(`webr::install("${pkg}", quiet = TRUE)`);
+      } catch(e) {
+        console.warn(`WebR: could not install ${pkg}:`, e.message);
+        /* Non-fatal — continue with other packages */
+      }
+    }
+
     webRReady = true;
-    const dot  = document.getElementById('nav-dot');
-    const txt  = document.getElementById('nav-status-text');
-    if (dot) { dot.className = 'nav-dot ready'; }
-    if (txt) { txt.textContent = 'R ready'; }
+    window._webR = webR;
+    setStatus('R ready ✓', 'ready');
+
   } catch(e) {
-    const txt = document.getElementById('nav-status-text');
-    if (txt) txt.textContent = 'R failed';
+    setStatus('R error ✗', 'error');
+    console.error('WebR init failed:', e);
   }
 })();
 
-/* ── Helpers ──────────────────────────────────────────────────── */
-function esc(t) {
-  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+/* ── HTML escape ─────────────────────────────────────────────────────── */
+const esc = t => String(t)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-/* ── Core runner ──────────────────────────────────────────────── */
+/* ── Core code runner ────────────────────────────────────────────────── */
 async function runCode(id, btn) {
-  if (!webRReady) { alert('R is still loading — please wait a moment.'); return; }
+  if (!webRReady) { alert('R is still loading — please wait.'); return; }
 
   const editor  = document.getElementById('editor-' + id);
   const outWrap = document.getElementById('out-' + id);
   const textEl  = outWrap.querySelector('.output-text');
   const plotEl  = outWrap.querySelector('.output-plot');
-  const code    = editor.value;
 
   outWrap.style.display = 'block';
   textEl.innerHTML = '<span class="out-wait">Running…</span>';
@@ -40,14 +80,16 @@ async function runCode(id, btn) {
 
   const orig = btn.textContent;
   btn.disabled = true;
-  btn.textContent = '⟳';
+  btn.textContent = '⟳ Running…';
 
   try {
     const shelter = await new webR.Shelter();
     let result;
     try {
-      result = await shelter.captureR(code, {
-        withAutoprint: true, captureStreams: true, captureConditions: true
+      result = await shelter.captureR(editor.value, {
+        withAutoprint: true,
+        captureStreams: true,
+        captureConditions: true
       });
     } finally { shelter.purge(); }
 
@@ -61,48 +103,133 @@ async function runCode(id, btn) {
 
     textEl.innerHTML = lines || '<span class="out-wait">(no output)</span>';
 
-    if (plotEl && result.images && result.images.length > 0) {
-      for (const img of result.images) {
+    if (plotEl && result.images?.length > 0) {
+      result.images.forEach(img => {
         const c = document.createElement('canvas');
         c.width = img.width; c.height = img.height;
         c.getContext('2d').drawImage(img, 0, 0);
         plotEl.appendChild(c);
-      }
+      });
     }
-  } catch(err) {
-    textEl.innerHTML = `<span class="r-err">Error: ${esc(err.message)}</span>`;
+  } catch(e) {
+    textEl.innerHTML = `<span class="r-err">Error: ${esc(e.message)}</span>`;
   } finally {
     btn.disabled = false;
     btn.textContent = orig;
   }
 }
 
-function toggleHint(id) {
+/* ── Hint toggle ─────────────────────────────────────────────────────── */
+const toggleHint = id => {
   const box = document.getElementById('hint-' + id);
   const btn = document.getElementById('hbtn-' + id);
   const vis = box.style.display === 'block';
   box.style.display = vis ? 'none' : 'block';
   btn.textContent   = vis ? '💡 Show hint' : '🙈 Hide hint';
+};
+
+/* ── File upload handler (Chapter 22) ───────────────────────────────── */
+async function handleFileUpload(inputEl) {
+  const file = inputEl.files[0];
+  if (!file) return;
+  if (!webRReady) { alert('R is still loading — please wait.'); return; }
+
+  const statusEl  = document.getElementById('upload-status');
+  const previewEl = document.getElementById('upload-preview');
+  const editorEl  = document.getElementById('editor-ch22_run');
+
+  statusEl.textContent = '⏳ Reading file…';
+  statusEl.className   = 'upload-status loading';
+
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const content = e.target.result;
+      const fname   = '/uploads/' + file.name;
+
+      /* Write to WebR virtual FS */
+      await webR.FS.writeFile(fname, new TextEncoder().encode(content));
+
+      /* Preview first 8 lines */
+      if (previewEl) {
+        previewEl.textContent = content.split('\n').slice(0, 8).join('\n');
+        previewEl.style.display = 'block';
+      }
+
+      /* Auto-populate code editor based on file extension */
+      const ext = file.name.split('.').pop().toLowerCase();
+      let code = '';
+      if (ext === 'csv') {
+        code = [
+          `# File loaded from your computer`,
+          `df <- read.csv("/uploads/${file.name}", stringsAsFactors = FALSE)`,
+          ``,
+          `cat("Rows:", nrow(df), "  Cols:", ncol(df), "\\n")`,
+          `head(df)`,
+        ].join('\n');
+      } else if (ext === 'tsv' || ext === 'txt') {
+        code = [
+          `df <- read.delim("/uploads/${file.name}", stringsAsFactors = FALSE)`,
+          `cat("Rows:", nrow(df), "  Cols:", ncol(df), "\\n")`,
+          `head(df)`,
+        ].join('\n');
+      } else {
+        code = `# Unknown format. Try:\n# df <- read.csv("/uploads/${file.name}")\nhead(df)`;
+      }
+
+      if (editorEl) editorEl.value = code;
+
+      const kb = (content.length / 1024).toFixed(1);
+      statusEl.textContent = `✓ Loaded: ${file.name} (${kb} KB)  — click ▶ Run to read it into R`;
+      statusEl.className   = 'upload-status ok';
+
+    } catch(err) {
+      statusEl.textContent = `✗ Error: ${err.message}`;
+      statusEl.className   = 'upload-status err';
+    }
+  };
+  reader.onerror = () => {
+    statusEl.textContent = '✗ Could not read file';
+    statusEl.className   = 'upload-status err';
+  };
+  reader.readAsText(file);
 }
 
-window.runWebR    = runCode;
-window.toggleHint = toggleHint;
-
-/* ── Scrollspy — highlight active nav link ────────────────────── */
+/* ── Drag-and-drop on upload zone ────────────────────────────────────── */
 window.addEventListener('DOMContentLoaded', () => {
-  const sections = document.querySelectorAll('.chapter');
-  const links    = document.querySelectorAll('.nav-link');
-
-  const obs = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        links.forEach(l => l.classList.remove('active'));
-        const link = document.querySelector(`.nav-link[data-ch="${e.target.id}"]`);
-        if (link) link.classList.add('active');
+  const zone = document.getElementById('drop-zone');
+  if (zone) {
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', ()  => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('dragover');
+      const fi = document.getElementById('file-input');
+      if (fi && e.dataTransfer.files.length > 0) {
+        /* Inject the dropped file into the hidden <input> */
+        const dt = new DataTransfer();
+        dt.items.add(e.dataTransfer.files[0]);
+        fi.files = dt.files;
+        handleFileUpload(fi);
       }
     });
-  }, { threshold: 0.25 });
+  }
+});
 
+/* ── Scrollspy — keeps nav pills in sync with reading position ───────── */
+window.addEventListener('DOMContentLoaded', () => {
+  const sections = document.querySelectorAll('.chapter');
+  if (!sections.length) return;
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting && window.syncNav) window.syncNav(e.target.id);
+    });
+  }, { threshold: 0.2, rootMargin: '-52px 0px 0px 0px' });
   sections.forEach(s => obs.observe(s));
 });
+
+/* ── Global exposure ─────────────────────────────────────────────────── */
+window.runWebR          = runCode;
+window.toggleHint       = toggleHint;
+window.handleFileUpload = handleFileUpload;
 </script>
