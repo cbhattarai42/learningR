@@ -911,8 +911,786 @@ names(book)',
 )
 ```
 
-> 🎉 **You have completed all 12 chapters!** You now know R's core building blocks: output, arithmetic, variables, data types, vectors, functions, data frames, plots, conditionals, loops, custom functions, and lists. These fundamentals will take you far.
+</div>
+
+---
+
+<div class="chapter" id="ch13">
+
+## dplyr Verbs {.chapter-title}
+
+<span class="ch-badge">CHAPTER 13</span>
+
+**dplyr** is the tidyverse package for data manipulation. Its six core **verbs** cover almost everything you need:
+
+| Verb | What it does |
+|---|---|
+| `filter()` | Keep rows matching a condition |
+| `select()` | Keep specific columns |
+| `mutate()` | Add or change a column |
+| `arrange()` | Sort rows |
+| `rename()` | Rename a column |
+| `count()` | Frequency table |
+
+> 💡 WebR installs packages on first use — first run may take ~30 s while dplyr downloads. Subsequent runs are instant.
+
+```{r results='asis'}
+example_block(
+'library(dplyr)
+data(mtcars)
+mtcars$car <- rownames(mtcars)
+
+# filter(): keep rows where cyl == 6
+filter(mtcars, cyl == 6) |> select(car, mpg, cyl, hp)
+
+# arrange(): sort by mpg descending — top 5
+arrange(mtcars, desc(mpg)) |> select(car, mpg) |> head(5)
+
+# mutate(): add kpl column (km per litre)
+mutate(mtcars, kpl = round(mpg * 0.425, 1)) |>
+  select(car, mpg, kpl) |> head(6)
+
+# count(): frequency of each cylinder type
+count(mtcars, cyl)', id = "ex13a")
+```
+
+```{r results='asis'}
+example_block(
+'library(dplyr)
+data(mtcars)
+mtcars$car <- rownames(mtcars)
+
+# select() — keep specific columns only
+select(mtcars, car, mpg, cyl, hp) |> head(5)
+
+# rename() — rename a column
+rename(mtcars, cylinders = cyl) |> head(3)
+
+# distinct() — unique combinations
+mtcars |> select(cyl, gear) |> distinct() |> arrange(cyl)', id = "ex13b")
+```
+
+```{r results='asis'}
+practice_block(
+  placeholder = 'library(dplyr)
+data(mtcars)
+mtcars$car <- rownames(mtcars)
+
+# 1. Filter cars with hp > 200, show name/hp/mpg
+filter(mtcars, hp > 200) |> select(car, hp, mpg)
+
+# 2. Add weight in kg (wt is in 1000 lbs; 1 lb = 0.453 kg)
+mutate(mtcars, weight_kg = round(wt * 1000 * 0.453, 0)) |>
+  select(car, wt, weight_kg) |> head(6)
+
+# 3. Top 5 fuel-efficient cars
+arrange(mtcars, desc(mpg)) |> select(car, mpg) |> head(5)',
+  id = "pr13",
+  prompt = "Use filter(), mutate(), and arrange() on mtcars: (1) HP > 200 cars, (2) add weight_kg, (3) top 5 fuel-efficient cars.",
+  hint = 'Chain operations with <code>|&gt;</code>. <code>desc()</code> inside arrange sorts highest first.'
+)
+```
+
+</div>
+
+---
+
+<div class="chapter" id="ch14">
+
+## Pipes & Grouping {.chapter-title}
+
+<span class="ch-badge">CHAPTER 14</span>
+
+The **pipe** `|>` passes the left-hand result into the right-hand function. `group_by()` + `summarise()` is dplyr's most powerful combo — it computes per-group statistics in one clean chain.
+
+```{r results='asis'}
+example_block(
+'library(dplyr)
+data(mtcars)
+
+# Without pipe — nested and hard to read
+head(arrange(filter(mtcars, cyl == 6), desc(mpg)), 3)
+
+# With pipe — reads like a sentence
+mtcars |>
+  filter(cyl == 6)   |>
+  arrange(desc(mpg)) |>
+  head(3)', id = "ex14a")
+```
+
+```{r results='asis'}
+example_block(
+'library(dplyr)
+data(mtcars)
+
+# group_by + summarise: stats per cylinder count
+mtcars |>
+  group_by(cyl) |>
+  summarise(
+    n        = n(),
+    mean_mpg = round(mean(mpg), 1),
+    max_hp   = max(hp),
+    mean_wt  = round(mean(wt), 2)
+  )
+
+# Multiple grouping variables
+mtcars |>
+  group_by(cyl, gear) |>
+  summarise(mean_mpg = round(mean(mpg), 1), .groups = "drop") |>
+  arrange(cyl, gear)', id = "ex14b")
+```
+
+```{r results='asis'}
+example_block(
+'library(dplyr)
+data(iris)
+
+# Full pipeline: filter → mutate → group → summarise → arrange
+iris |>
+  filter(Petal.Length > 1.5) |>
+  mutate(petal_ratio = round(Petal.Length / Petal.Width, 2)) |>
+  group_by(Species) |>
+  summarise(
+    n           = n(),
+    mean_ratio  = round(mean(petal_ratio), 2),
+    mean_sepal  = round(mean(Sepal.Length), 2)
+  ) |>
+  arrange(desc(mean_ratio))', id = "ex14c")
+```
+
+```{r results='asis'}
+practice_block(
+  placeholder = 'library(dplyr)
+data(iris)
+
+# 1. Average sepal dimensions by species
+iris |>
+  group_by(Species) |>
+  summarise(
+    mean_sepal_l = round(mean(Sepal.Length), 2),
+    mean_sepal_w = round(mean(Sepal.Width),  2),
+    n = n()
+  )
+
+# 2. Which species has the largest petals?
+iris |>
+  group_by(Species) |>
+  summarise(mean_petal = round(mean(Petal.Length), 2)) |>
+  arrange(desc(mean_petal))
+
+# 3. Count flowers with petal length > 5 by species
+iris |>
+  filter(Petal.Length > 5) |>
+  count(Species)',
+  id = "pr14",
+  prompt = "Analyse iris with pipes: (1) average sepal dims by species, (2) largest-petal species ranked, (3) count large-petalled flowers per species.",
+  hint = '<code>group_by(Species) |&gt; summarise()</code> splits then aggregates. <code>arrange(desc(...))</code> ranks descending.'
+)
+```
+
+</div>
+
+---
+
+<div class="chapter" id="ch15">
+
+## ggplot2 Basics {.chapter-title}
+
+<span class="ch-badge">CHAPTER 15</span>
+
+**ggplot2** builds plots layer by layer. Every plot needs: **data** + **aesthetics** `aes()` + **geometry** `geom_*()`.
+
+```{r results='asis'}
+example_block(
+'library(ggplot2)
+data(mtcars)
+
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point(color = "steelblue", size = 3, alpha = 0.8) +
+  labs(title = "Car Weight vs Fuel Efficiency",
+       x = "Weight (1000 lbs)", y = "Miles per Gallon") +
+  theme_minimal()', id = "ex15a")
+```
+
+```{r results='asis'}
+example_block(
+'library(ggplot2)
+data(mtcars)
+mtcars$cyl <- factor(mtcars$cyl)
+
+ggplot(mtcars, aes(x = wt, y = mpg, color = cyl)) +
+  geom_point(size = 3.5, alpha = 0.9) +
+  scale_color_manual(values = c("4"="#2ECC71","6"="#F39C12","8"="#E74C3C")) +
+  labs(title = "Weight vs MPG by Cylinders",
+       x = "Weight (1000 lbs)", y = "Miles per Gallon", color = "Cylinders") +
+  theme_classic()', id = "ex15b")
+```
+
+```{r results='asis'}
+example_block(
+'library(ggplot2); library(dplyr)
+data(mtcars)
+mtcars$cyl <- factor(mtcars$cyl)
+
+summary_df <- mtcars |>
+  group_by(cyl) |>
+  summarise(mean_mpg = round(mean(mpg), 1))
+
+ggplot(summary_df, aes(x = cyl, y = mean_mpg, fill = cyl)) +
+  geom_col(width = 0.6, show.legend = FALSE) +
+  geom_text(aes(label = mean_mpg), vjust = -0.5, size = 4) +
+  scale_fill_manual(values = c("4"="#2ECC71","6"="#F39C12","8"="#E74C3C")) +
+  labs(title = "Mean MPG by Cylinder Count", x = "Cylinders", y = "Mean MPG") +
+  theme_minimal()', id = "ex15c")
+```
+
+```{r results='asis'}
+practice_block(
+  placeholder = 'library(ggplot2)
+data(iris)
+
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  labs(title = "Iris: Sepal Dimensions by Species",
+       x = "Sepal Length (cm)", y = "Sepal Width (cm)") +
+  theme_minimal()
+
+# Challenge: add size = Petal.Length inside aes()
+# and try theme_classic() or theme_bw()',
+  id = "pr15",
+  prompt = "Run the iris scatter, then (1) map <code>size = Petal.Length</code> in <code>aes()</code> to scale point size by petal, (2) swap the theme.",
+  hint = 'Add <code>size = Petal.Length</code> inside <code>aes()</code>. Try <code>theme_classic()</code>, <code>theme_bw()</code>, <code>theme_dark()</code>.'
+)
+```
+
+</div>
+
+---
+
+<div class="chapter" id="ch16">
+
+## ggplot2 Advanced {.chapter-title}
+
+<span class="ch-badge">CHAPTER 16</span>
+
+Facets, boxplots, density plots, and theme customisation give you fine control over every aspect of a ggplot2 figure.
+
+```{r results='asis'}
+example_block(
+'library(ggplot2)
+data(iris)
+
+ggplot(iris, aes(x = Species, y = Petal.Length, fill = Species)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = 21) +
+  geom_jitter(width = 0.15, alpha = 0.4, size = 1.5) +
+  scale_fill_manual(values = c("#3498DB","#E74C3C","#2ECC71")) +
+  labs(title = "Petal Length by Species",
+       x = "Species", y = "Petal Length (cm)") +
+  theme_minimal() +
+  theme(legend.position = "none")', id = "ex16a")
+```
+
+```{r results='asis'}
+example_block(
+'library(ggplot2)
+data(iris)
+
+# Density + facet_wrap
+ggplot(iris, aes(x = Sepal.Length, fill = Species)) +
+  geom_density(alpha = 0.5) +
+  scale_fill_manual(values = c("#3498DB","#E74C3C","#2ECC71")) +
+  labs(title = "Sepal Length Distribution", x = "Sepal Length (cm)") +
+  theme_minimal()
+
+# Scatter with regression line per facet
+ggplot(iris, aes(x = Sepal.Length, y = Petal.Length)) +
+  geom_point(aes(color = Species), alpha = 0.7, size = 2) +
+  geom_smooth(method = "lm", se = TRUE, color = "black", linewidth = 0.8) +
+  facet_wrap(~ Species) +
+  labs(title = "Sepal vs Petal Length per Species",
+       x = "Sepal Length (cm)", y = "Petal Length (cm)") +
+  theme_minimal() +
+  theme(legend.position = "none")', id = "ex16b")
+```
+
+```{r results='asis'}
+practice_block(
+  placeholder = 'library(ggplot2)
+data(mtcars)
+mtcars$cyl <- factor(mtcars$cyl)
+
+ggplot(mtcars, aes(x = cyl, y = mpg, fill = cyl)) +
+  geom_boxplot(alpha = 0.6, outlier.shape = NA) +
+  geom_jitter(width = 0.15, alpha = 0.6, size = 2.5) +
+  scale_fill_manual(values = c("4"="#2ECC71","6"="#F39C12","8"="#E74C3C")) +
+  labs(title = "MPG by Cylinders",
+       x = "Cylinders", y = "Miles per Gallon") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Challenge: add + facet_wrap(~ gear) to split by gear count too',
+  id = "pr16",
+  prompt = "Run the boxplot, then add <code>+ facet_wrap(~ gear)</code> to split each panel by gear count.",
+  hint = 'Add <code>+ facet_wrap(~ gear)</code> before <code>theme_minimal()</code>. Each gear count (3, 4, 5) gets its own panel.'
+)
+```
+
+</div>
+
+---
+
+<div class="chapter" id="ch17">
+
+## Load Data from GitHub {.chapter-title}
+
+<span class="ch-badge">CHAPTER 17</span>
+
+Upload a CSV to your GitHub repo and load it in R using the **raw file URL** — students always get the latest data without any downloads.
+
+**Raw URL format:**
+`https://raw.githubusercontent.com/USERNAME/REPO/main/data/students.csv`
+
+> 📂 A ready-to-use `data/students.csv` file was included in your tutorial package. Upload it to the `data/` folder in your GitHub repo.
+
+```{r results='asis'}
+example_block(
+'# Replace the URL below with YOUR raw GitHub URL after uploading students.csv
+# url <- "https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/data/students.csv"
+# students <- read.csv(url(url))
+
+# For this demo we load the same dataset inline
+students <- data.frame(
+  name          = c("Alice","Bob","Carol","David","Eve","Frank","Grace","Henry",
+                    "Iris","Jack","Kim","Liam","Mia","Noah","Olivia","Peter",
+                    "Quinn","Ryan","Sara","Tom","Uma","Vince","Wendy","Xander",
+                    "Yara","Zoe","Aaron","Beth","Carl","Diana"),
+  age           = c(20,21,19,22,20,21,19,23,20,22,21,20,19,22,21,20,19,23,21,20,22,21,20,19,21,20,22,21,19,23),
+  gender        = c("F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","F","M","F","M","F"),
+  study_hours   = c(6.5,4.0,7.0,3.5,5.5,6.0,8.0,2.5,7.5,4.5,6.5,5.0,7.0,3.0,6.0,4.0,8.5,3.5,7.0,5.5,6.5,4.5,7.5,3.0,6.0,8.0,4.0,6.5,5.0,7.0),
+  sleep_hours   = c(7.5,6.0,8.0,5.5,7.0,6.5,8.5,5.0,7.0,6.5,7.5,7.0,8.0,5.5,7.0,6.0,8.5,5.0,7.5,6.5,7.0,6.0,8.0,5.5,7.5,8.0,6.0,7.0,6.5,8.0),
+  score_math    = c(88,74,92,61,85,79,96,55,90,71,84,78,93,62,87,72,97,66,89,80,85,73,91,59,83,95,70,86,76,90),
+  score_english = c(82,68,95,72,78,74,91,60,88,65,80,75,89,58,83,70,94,63,86,77,82,69,90,62,81,92,67,84,74,88),
+  score_science = c(91,70,89,65,83,77,94,58,92,69,86,80,91,64,85,74,96,68,88,78,84,71,93,61,82,94,72,87,78,91),
+  grade         = c("A","C","A","D","B","B","A","F","A","C","B","B","A","D","B","C","A","D","A","B","B","C","A","F","B","A","C","B","B","A"),
+  stringsAsFactors = FALSE
+)
+
+dim(students)
+str(students)
+head(students, 5)', id = "ex17a")
+```
+
+```{r results='asis'}
+example_block(
+'# Assumes students is already defined (run ex17a first)
+students <- data.frame(
+  name=c("Alice","Bob","Carol","David","Eve","Frank","Grace","Henry","Iris","Jack","Kim","Liam","Mia","Noah","Olivia","Peter","Quinn","Ryan","Sara","Tom","Uma","Vince","Wendy","Xander","Yara","Zoe","Aaron","Beth","Carl","Diana"),
+  gender=c("F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","F","M","F","M","F"),
+  study_hours=c(6.5,4.0,7.0,3.5,5.5,6.0,8.0,2.5,7.5,4.5,6.5,5.0,7.0,3.0,6.0,4.0,8.5,3.5,7.0,5.5,6.5,4.5,7.5,3.0,6.0,8.0,4.0,6.5,5.0,7.0),
+  score_math=c(88,74,92,61,85,79,96,55,90,71,84,78,93,62,87,72,97,66,89,80,85,73,91,59,83,95,70,86,76,90),
+  score_english=c(82,68,95,72,78,74,91,60,88,65,80,75,89,58,83,70,94,63,86,77,82,69,90,62,81,92,67,84,74,88),
+  score_science=c(91,70,89,65,83,77,94,58,92,69,86,80,91,64,85,74,96,68,88,78,84,71,93,61,82,94,72,87,78,91),
+  grade=c("A","C","A","D","B","B","A","F","A","C","B","B","A","D","B","C","A","D","A","B","B","C","A","F","B","A","C","B","B","A"),
+  stringsAsFactors=FALSE)
+
+library(dplyr)
+summary(students[, c("study_hours","score_math","score_english","score_science")])
+
+students |>
+  group_by(grade) |>
+  summarise(n = n(), mean_math = round(mean(score_math), 1)) |>
+  arrange(grade)', id = "ex17b")
+```
+
+```{r results='asis'}
+practice_block(
+  placeholder = 'students <- data.frame(
+  name=c("Alice","Bob","Carol","David","Eve","Frank","Grace","Henry","Iris","Jack","Kim","Liam","Mia","Noah","Olivia","Peter","Quinn","Ryan","Sara","Tom","Uma","Vince","Wendy","Xander","Yara","Zoe","Aaron","Beth","Carl","Diana"),
+  gender=c("F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","F","M","F","M","F"),
+  study_hours=c(6.5,4.0,7.0,3.5,5.5,6.0,8.0,2.5,7.5,4.5,6.5,5.0,7.0,3.0,6.0,4.0,8.5,3.5,7.0,5.5,6.5,4.5,7.5,3.0,6.0,8.0,4.0,6.5,5.0,7.0),
+  score_math=c(88,74,92,61,85,79,96,55,90,71,84,78,93,62,87,72,97,66,89,80,85,73,91,59,83,95,70,86,76,90),
+  score_english=c(82,68,95,72,78,74,91,60,88,65,80,75,89,58,83,70,94,63,86,77,82,69,90,62,81,92,67,84,74,88),
+  score_science=c(91,70,89,65,83,77,94,58,92,69,86,80,91,64,85,74,96,68,88,78,84,71,93,61,82,94,72,87,78,91),
+  grade=c("A","C","A","D","B","B","A","F","A","C","B","B","A","D","B","C","A","D","A","B","B","C","A","F","B","A","C","B","B","A"),
+  stringsAsFactors=FALSE)
+
+library(dplyr)
+
+# 1. Count male vs female
+count(students, gender)
+
+# 2. Average scores by grade
+students |>
+  group_by(grade) |>
+  summarise(n=n(), math=round(mean(score_math),1),
+            english=round(mean(score_english),1),
+            science=round(mean(score_science),1)) |>
+  arrange(desc(math))
+
+# 3. Top 5 math students
+arrange(students, desc(score_math)) |>
+  select(name, grade, score_math) |> head(5)',
+  id = "pr17",
+  prompt = "Using students data: (1) count by gender, (2) average scores by grade, (3) top 5 math students.",
+  hint = 'Use <code>count(students, gender)</code>, <code>group_by(grade) |&gt; summarise()</code>, and <code>arrange(desc(score_math))</code>.'
+)
+```
+
+</div>
+
+---
+
+<div class="chapter" id="ch18">
+
+## Descriptive Statistics {.chapter-title}
+
+<span class="ch-badge">CHAPTER 18</span>
+
+Descriptive statistics summarise the key features of data — centre, spread, and shape. Always explore your data before modelling.
+
+```{r results='asis'}
+example_block(
+'students <- data.frame(
+  study_hours=c(6.5,4.0,7.0,3.5,5.5,6.0,8.0,2.5,7.5,4.5,6.5,5.0,7.0,3.0,6.0,4.0,8.5,3.5,7.0,5.5,6.5,4.5,7.5,3.0,6.0,8.0,4.0,6.5,5.0,7.0),
+  score_math=c(88,74,92,61,85,79,96,55,90,71,84,78,93,62,87,72,97,66,89,80,85,73,91,59,83,95,70,86,76,90),
+  score_science=c(91,70,89,65,83,77,94,58,92,69,86,80,91,64,85,74,96,68,88,78,84,71,93,61,82,94,72,87,78,91),
+  gender=c("F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","F","M","F","M","F"))
+
+summary(students[, c("study_hours","score_math","score_science")])
+
+cat("\n=== Math Score ===\n")
+cat("Mean:  ", round(mean(students$score_math), 2), "\n")
+cat("Median:", median(students$score_math), "\n")
+cat("SD:    ", round(sd(students$score_math), 2), "\n")
+cat("IQR:   ", IQR(students$score_math), "\n")
+cat("Range: ", paste(range(students$score_math), collapse=" to "), "\n")', id = "ex18a")
+```
+
+```{r results='asis'}
+example_block(
+'students <- data.frame(
+  study_hours=c(6.5,4.0,7.0,3.5,5.5,6.0,8.0,2.5,7.5,4.5,6.5,5.0,7.0,3.0,6.0,4.0,8.5,3.5,7.0,5.5,6.5,4.5,7.5,3.0,6.0,8.0,4.0,6.5,5.0,7.0),
+  score_math=c(88,74,92,61,85,79,96,55,90,71,84,78,93,62,87,72,97,66,89,80,85,73,91,59,83,95,70,86,76,90),
+  score_science=c(91,70,89,65,83,77,94,58,92,69,86,80,91,64,85,74,96,68,88,78,84,71,93,61,82,94,72,87,78,91),
+  gender=c("F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","F","M","F","M","F"))
+
+library(dplyr)
+students |>
+  group_by(gender) |>
+  summarise(n=n(), mean_math=round(mean(score_math),1),
+            sd_math=round(sd(score_math),1), median_math=median(score_math))
+
+hist(students$score_math, main="Math Score Distribution",
+     xlab="Score", col="steelblue", breaks=8, border="white")', id = "ex18b")
+```
+
+```{r results='asis'}
+practice_block(
+  placeholder = 'students <- data.frame(
+  score_math=c(88,74,92,61,85,79,96,55,90,71,84,78,93,62,87,72,97,66,89,80,85,73,91,59,83,95,70,86,76,90),
+  score_science=c(91,70,89,65,83,77,94,58,92,69,86,80,91,64,85,74,96,68,88,78,84,71,93,61,82,94,72,87,78,91),
+  grade=c("A","C","A","D","B","B","A","F","A","C","B","B","A","D","B","C","A","D","A","B","B","C","A","F","B","A","C","B","B","A"))
+
+# 1. Science score summary stats
+cat("Mean:", round(mean(students$score_science),1), "\n")
+cat("SD:  ", round(sd(students$score_science),1), "\n")
+cat("IQR: ", IQR(students$score_science), "\n")
+
+# 2. Boxplot: math vs science side-by-side
+boxplot(students$score_math, students$score_science,
+        names=c("Math","Science"),
+        col=c("steelblue","tomato"),
+        main="Math vs Science Score Distribution",
+        ylab="Score")
+
+# 3. Mean scores per grade
+library(dplyr)
+students |>
+  group_by(grade) |>
+  summarise(math=round(mean(score_math),1), sci=round(mean(score_science),1)) |>
+  arrange(grade)',
+  id = "pr18",
+  prompt = "Science score stats, side-by-side boxplot (math vs science), and average scores grouped by grade.",
+  hint = '<code>boxplot(vec1, vec2, names=c("A","B"))</code> places them side by side. Then pipe <code>group_by(grade) |&gt; summarise()</code> for grouped means.'
+)
+```
+
+</div>
+
+---
+
+<div class="chapter" id="ch19">
+
+## Correlation & t-test {.chapter-title}
+
+<span class="ch-badge">CHAPTER 19</span>
+
+**Correlation** (−1 to +1) measures how two variables move together. **The t-test** asks whether a difference between means is statistically significant.
+
+```{r results='asis'}
+example_block(
+'students <- data.frame(
+  study_hours=c(6.5,4.0,7.0,3.5,5.5,6.0,8.0,2.5,7.5,4.5,6.5,5.0,7.0,3.0,6.0,4.0,8.5,3.5,7.0,5.5,6.5,4.5,7.5,3.0,6.0,8.0,4.0,6.5,5.0,7.0),
+  score_math=c(88,74,92,61,85,79,96,55,90,71,84,78,93,62,87,72,97,66,89,80,85,73,91,59,83,95,70,86,76,90),
+  score_english=c(82,68,95,72,78,74,91,60,88,65,80,75,89,58,83,70,94,63,86,77,82,69,90,62,81,92,67,84,74,88),
+  score_science=c(91,70,89,65,83,77,94,58,92,69,86,80,91,64,85,74,96,68,88,78,84,71,93,61,82,94,72,87,78,91))
+
+# Single correlation
+cor(students$study_hours, students$score_math)
+
+# Full correlation matrix
+round(cor(students), 3)
+
+# Scatter with regression line
+plot(students$study_hours, students$score_math,
+     pch=16, col="steelblue", cex=1.3,
+     main="Study Hours vs Math Score",
+     xlab="Study Hours / Day", ylab="Math Score")
+abline(lm(score_math ~ study_hours, data=students),
+       col="tomato", lwd=2)', id = "ex19a")
+```
+
+```{r results='asis'}
+example_block(
+'students <- data.frame(
+  score_math=c(88,74,92,61,85,79,96,55,90,71,84,78,93,62,87,72,97,66,89,80,85,73,91,59,83,95,70,86,76,90),
+  gender=c("F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","F","M","F","M","F"))
+
+female <- students$score_math[students$gender == "F"]
+male   <- students$score_math[students$gender == "M"]
+
+cat("Female mean:", round(mean(female), 1), "\n")
+cat("Male mean:  ", round(mean(male), 1), "\n\n")
+
+result <- t.test(female, male, var.equal = FALSE)
+print(result)
+
+cat("\n--- Interpretation ---\n")
+if (result$p.value < 0.05) {
+  cat("p < 0.05: statistically significant difference.\n")
+} else {
+  cat("p >= 0.05: no significant difference detected.\n")
+}', id = "ex19b")
+```
+
+```{r results='asis'}
+practice_block(
+  placeholder = 'students <- data.frame(
+  study_hours=c(6.5,4.0,7.0,3.5,5.5,6.0,8.0,2.5,7.5,4.5,6.5,5.0,7.0,3.0,6.0,4.0,8.5,3.5,7.0,5.5,6.5,4.5,7.5,3.0,6.0,8.0,4.0,6.5,5.0,7.0),
+  score_science=c(91,70,89,65,83,77,94,58,92,69,86,80,91,64,85,74,96,68,88,78,84,71,93,61,82,94,72,87,78,91),
+  sleep_hours=c(7.5,6.0,8.0,5.5,7.0,6.5,8.5,5.0,7.0,6.5,7.5,7.0,8.0,5.5,7.0,6.0,8.5,5.0,7.5,6.5,7.0,6.0,8.0,5.5,7.5,8.0,6.0,7.0,6.5,8.0))
+
+# 1. Correlation: sleep_hours vs score_science
+cor(students$sleep_hours, students$score_science)
+
+# 2. Full correlation matrix
+round(cor(students), 3)
+
+# 3. One-sample t-test: is mean science score significantly different from 75?
+t.test(students$score_science, mu = 75)
+
+# 4. Scatter: sleep hours vs science score + regression line
+plot(students$sleep_hours, students$score_science,
+     pch=16, col="forestgreen",
+     main="Sleep Hours vs Science Score",
+     xlab="Sleep Hours", ylab="Science Score")
+abline(lm(score_science ~ sleep_hours, data=students), col="red", lwd=2)',
+  id = "pr19",
+  prompt = "Explore sleep vs science: (1) correlation, (2) matrix, (3) one-sample t-test vs mu=75, (4) scatter with regression line.",
+  hint = 'One-sample t-test: <code>t.test(students$score_science, mu = 75)</code>. If p &lt; 0.05, the true mean is significantly different from 75.'
+)
+```
+
+</div>
+
+---
+
+<div class="chapter" id="ch20">
+
+## Linear Regression {.chapter-title}
+
+<span class="ch-badge">CHAPTER 20</span>
+
+`lm()` fits a linear model **y = β₀ + β₁x**. `summary()` gives coefficients, R², and p-values. `predict()` makes new predictions with confidence intervals.
+
+```{r results='asis'}
+example_block(
+'students <- data.frame(
+  study_hours=c(6.5,4.0,7.0,3.5,5.5,6.0,8.0,2.5,7.5,4.5,6.5,5.0,7.0,3.0,6.0,4.0,8.5,3.5,7.0,5.5,6.5,4.5,7.5,3.0,6.0,8.0,4.0,6.5,5.0,7.0),
+  score_math=c(88,74,92,61,85,79,96,55,90,71,84,78,93,62,87,72,97,66,89,80,85,73,91,59,83,95,70,86,76,90))
+
+model <- lm(score_math ~ study_hours, data = students)
+summary(model)', id = "ex20a")
+```
+
+```{r results='asis'}
+example_block(
+'students <- data.frame(
+  study_hours=c(6.5,4.0,7.0,3.5,5.5,6.0,8.0,2.5,7.5,4.5,6.5,5.0,7.0,3.0,6.0,4.0,8.5,3.5,7.0,5.5,6.5,4.5,7.5,3.0,6.0,8.0,4.0,6.5,5.0,7.0),
+  score_math=c(88,74,92,61,85,79,96,55,90,71,84,78,93,62,87,72,97,66,89,80,85,73,91,59,83,95,70,86,76,90),
+  sleep_hours=c(7.5,6.0,8.0,5.5,7.0,6.5,8.5,5.0,7.0,6.5,7.5,7.0,8.0,5.5,7.0,6.0,8.5,5.0,7.5,6.5,7.0,6.0,8.0,5.5,7.5,8.0,6.0,7.0,6.5,8.0))
+
+m1 <- lm(score_math ~ study_hours, data = students)
+cat("Simple R2:  ", round(summary(m1)$r.squared, 4), "\n")
+cat("Intercept: ", round(coef(m1)[1], 2), "\n")
+cat("Slope:     ", round(coef(m1)[2], 2), "\n\n")
+
+# Predict for new values with 95% confidence interval
+new_data <- data.frame(study_hours = c(4, 5, 6, 7, 8))
+cbind(new_data, round(predict(m1, newdata=new_data, interval="confidence"), 1))
+
+# Multiple regression
+m2 <- lm(score_math ~ study_hours + sleep_hours, data = students)
+cat("\nMultiple R2:", round(summary(m2)$r.squared, 4), "\n")
+summary(m2)$coefficients', id = "ex20b")
+```
+
+```{r results='asis'}
+practice_block(
+  placeholder = 'students <- data.frame(
+  study_hours=c(6.5,4.0,7.0,3.5,5.5,6.0,8.0,2.5,7.5,4.5,6.5,5.0,7.0,3.0,6.0,4.0,8.5,3.5,7.0,5.5,6.5,4.5,7.5,3.0,6.0,8.0,4.0,6.5,5.0,7.0),
+  score_science=c(91,70,89,65,83,77,94,58,92,69,86,80,91,64,85,74,96,68,88,78,84,71,93,61,82,94,72,87,78,91),
+  sleep_hours=c(7.5,6.0,8.0,5.5,7.0,6.5,8.5,5.0,7.0,6.5,7.5,7.0,8.0,5.5,7.0,6.0,8.5,5.0,7.5,6.5,7.0,6.0,8.0,5.5,7.5,8.0,6.0,7.0,6.5,8.0))
+
+# 1. Fit science ~ study_hours
+m1 <- lm(score_science ~ study_hours, data=students)
+cat("Simple R2:  ", round(summary(m1)$r.squared, 4), "\n")
+
+# 2. Fit science ~ study_hours + sleep_hours
+m2 <- lm(score_science ~ study_hours + sleep_hours, data=students)
+cat("Multiple R2:", round(summary(m2)$r.squared, 4), "\n")
+
+# 3. Does adding sleep_hours significantly improve the model?
+anova(m1, m2)
+
+# 4. Predict science score for 7 study hours, 8 sleep hours
+predict(m2, newdata=data.frame(study_hours=7, sleep_hours=8),
+        interval="prediction")',
+  id = "pr20",
+  prompt = "Fit simple then multiple regression for science scores. Compare with ANOVA and predict for study=7h, sleep=8h.",
+  hint = '<code>anova(m1, m2)</code> tests whether the extra variable significantly improves fit. Significant p means yes — keep it!'
+)
+```
+
+</div>
+
+---
+
+<div class="chapter" id="ch21">
+
+## Curve Fitting & Diagnostic Plots {.chapter-title}
+
+<span class="ch-badge">CHAPTER 21</span>
+
+Not all relationships are linear. Fit **polynomial** curves with `poly()` inside `lm()`. Use the four standard **diagnostic plots** to verify model assumptions.
+
+```{r results='asis'}
+example_block(
+'set.seed(42)
+x  <- seq(-3, 3, by = 0.3)
+y  <- 2 + 1.5*x - 0.8*x^2 + rnorm(length(x), sd = 0.5)
+
+m1 <- lm(y ~ x)
+m2 <- lm(y ~ poly(x, 2, raw=TRUE))
+m3 <- lm(y ~ poly(x, 3, raw=TRUE))
+
+cat("Linear    R2:", round(summary(m1)$r.squared, 4), "\n")
+cat("Quadratic R2:", round(summary(m2)$r.squared, 4), "\n")
+cat("Cubic     R2:", round(summary(m3)$r.squared, 4), "\n")
+
+x_seq <- seq(-3, 3, length.out=200)
+plot(x, y, pch=16, col="#555", cex=1.2,
+     main="Polynomial Curve Fitting", xlab="x", ylab="y")
+lines(x_seq, predict(m1, data.frame(x=x_seq)), col="tomato",      lwd=2, lty=2)
+lines(x_seq, predict(m2, data.frame(x=x_seq)), col="steelblue",   lwd=2.5)
+lines(x_seq, predict(m3, data.frame(x=x_seq)), col="forestgreen", lwd=2, lty=3)
+legend("topright", legend=c("Linear","Quadratic","Cubic"),
+       col=c("tomato","steelblue","forestgreen"), lwd=2, lty=c(2,1,3), bty="n")', id = "ex21a")
+```
+
+```{r results='asis'}
+example_block(
+'library(ggplot2)
+students <- data.frame(
+  study_hours=c(6.5,4.0,7.0,3.5,5.5,6.0,8.0,2.5,7.5,4.5,6.5,5.0,7.0,3.0,6.0,4.0,8.5,3.5,7.0,5.5,6.5,4.5,7.5,3.0,6.0,8.0,4.0,6.5,5.0,7.0),
+  score_math=c(88,74,92,61,85,79,96,55,90,71,84,78,93,62,87,72,97,66,89,80,85,73,91,59,83,95,70,86,76,90),
+  gender=c("F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","M","F","F","M","F","M","F"))
+
+r2 <- round(summary(lm(score_math ~ study_hours, data=students))$r.squared, 3)
+
+ggplot(students, aes(x=study_hours, y=score_math)) +
+  geom_point(aes(color=gender), size=3.5, alpha=0.85) +
+  geom_smooth(method="lm", se=TRUE, color="#2C3E50",
+              fill="#AED6F1", linewidth=1.2) +
+  scale_color_manual(values=c("F"="#E74C3C","M"="#3498DB"),
+                     labels=c("Female","Male")) +
+  annotate("text", x=3, y=94,
+           label=paste0("R\u00b2 = ", r2), size=4.5, color="#2C3E50") +
+  labs(title="Study Hours vs Math Score with 95% CI",
+       subtitle="Linear regression with confidence band",
+       x="Study Hours / Day", y="Math Score", color="Gender") +
+  theme_minimal(base_size=13) +
+  theme(legend.position="top")', id = "ex21b")
+```
+
+```{r results='asis'}
+example_block(
+'# 4 standard diagnostic plots for a regression model
+students <- data.frame(
+  study_hours=c(6.5,4.0,7.0,3.5,5.5,6.0,8.0,2.5,7.5,4.5,6.5,5.0,7.0,3.0,6.0,4.0,8.5,3.5,7.0,5.5,6.5,4.5,7.5,3.0,6.0,8.0,4.0,6.5,5.0,7.0),
+  score_math=c(88,74,92,61,85,79,96,55,90,71,84,78,93,62,87,72,97,66,89,80,85,73,91,59,83,95,70,86,76,90))
+
+model <- lm(score_math ~ study_hours, data=students)
+
+par(mfrow=c(2,2))
+plot(model)
+# Plot 1 — Residuals vs Fitted:   test for linearity
+# Plot 2 — Normal Q-Q:            test normality of residuals
+# Plot 3 — Scale-Location:        test equal variance (homoscedasticity)
+# Plot 4 — Residuals vs Leverage: spot influential outliers', id = "ex21c")
+```
+
+```{r results='asis'}
+practice_block(
+  placeholder = 'library(ggplot2)
+
+# Simulated bacterial growth (S-curve / logistic shape)
+set.seed(7)
+hours <- 0:12
+cells <- c(100,180,310,530,870,1350,1900,2500,2980,3320,3520,3640,3700) +
+         rnorm(13, sd=80)
+df <- data.frame(hours=hours, cells=cells)
+
+# 1. Linear vs cubic fit — compare R2
+m_lin  <- lm(cells ~ hours, data=df)
+m_poly <- lm(cells ~ poly(hours, 3, raw=TRUE), data=df)
+cat("Linear R2:", round(summary(m_lin)$r.squared,  4), "\n")
+cat("Cubic  R2:", round(summary(m_poly)$r.squared, 4), "\n")
+
+# 2. Plot with ggplot2: data points + both fitted curves
+ggplot(df, aes(x=hours, y=cells)) +
+  geom_point(color="#E74C3C", size=3.5) +
+  geom_smooth(method="lm", formula=y~x,
+              color="steelblue", linewidth=1, linetype="dashed", se=FALSE) +
+  geom_smooth(method="lm", formula=y~poly(x,3),
+              color="forestgreen", linewidth=1.5, se=TRUE, fill="#c8e6c9") +
+  labs(title="Bacterial Growth: Linear vs Cubic Fit",
+       subtitle="Dashed=linear | Solid=cubic with 95% CI",
+       x="Hours", y="Cell Count") +
+  theme_minimal(base_size=13)
+
+# 3. Diagnostic plots for the cubic model
+par(mfrow=c(2,2)); plot(m_poly)',
+  id = "pr21",
+  prompt = "Fit linear and cubic to bacterial growth data, compare R², plot both curves with ggplot2, then run diagnostic plots on the cubic model.",
+  hint = 'In <code>geom_smooth()</code>, set <code>formula = y ~ poly(x, 3)</code> for the cubic curve. Check the Q-Q plot — if points follow the diagonal line, residuals are approximately normal.'
+)
+```
+
+> 🎉 **Congratulations — all 21 chapters complete!**
 >
-> **What's next?** Explore [tidyverse](https://www.tidyverse.org/) for modern data wrangling, [ggplot2](https://ggplot2.tidyverse.org/) for beautiful charts, and real datasets on [Kaggle](https://kaggle.com/datasets).
+> You have covered R fundamentals, tidyverse wrangling with dplyr, ggplot2 visualisation, loading real data from GitHub, descriptive statistics, hypothesis testing, linear and multiple regression, polynomial curve fitting, and model diagnostics.
+>
+> **What is next?** Explore [tidymodels](https://www.tidymodels.org/) for machine learning, [Quarto](https://quarto.org/) for publishing, and real datasets on [Kaggle](https://kaggle.com/datasets) and [TidyTuesday](https://github.com/rfordatascience/tidytuesday).
 
 </div>
