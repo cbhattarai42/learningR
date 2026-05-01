@@ -1,149 +1,111 @@
 # 📘 Learn R — Interactive Beginner Tutorial
 
-An interactive R tutorial that runs entirely in the browser — **no R installation required for students.**
+An interactive R tutorial (21 chapters + file upload) that runs entirely in the browser using [WebR](https://webr.r-wasm.org/). No R installation required for students.
 
-Built with [R Markdown](https://rmarkdown.rstudio.com/) + [WebR](https://webr.r-wasm.org/), hosted free on [GitHub Pages](https://pages.github.com/).
-
----
-
-## 🌐 Live Demo
-
-> **https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/**
+## 🌐 Live Site
+> `https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/`
 
 ---
 
-## 📁 File Structure
+## 📁 Files in This Package
 
 ```
-your-repo/
-├── index.Rmd          ← Main tutorial (edit this to add content)
-├── style.css          ← All visual styling
-├── header.html        ← WebR JavaScript engine (loads in <head>)
-├── footer.html        ← Page footer
-├── README.md
+learn-r/
+├── index.Rmd                          ← Main tutorial (all 21 chapters)
+├── navbar.html                        ← Top navigation bar
+├── header.html                        ← WebR engine + package installer
+├── style.css                          ← All styling
+├── footer.html                        ← Page footer
+├── data/
+│   └── students.csv                   ← Sample dataset (Ch 17–21)
 └── .github/
     └── workflows/
-        └── deploy.yml ← Auto-renders & deploys on every git push
+        └── deploy.yml                 ← Auto-render & deploy on push
 ```
 
 ---
 
-## 🚀 How to Host on GitHub Pages (Step-by-Step)
+## 🚀 Deploy to GitHub Pages (Step-by-Step)
 
-### Step 1 — Create a GitHub repository
+### Step 1 — Create a public GitHub repo
+Go to https://github.com/new → name it `learn-r` → **Public** → Create
 
-1. Go to [github.com/new](https://github.com/new)
-2. Name it something like `learn-r` or `r-tutorial`
-3. Set visibility to **Public**
-4. Click **Create repository**
+### Step 2 — Upload the 5 root files
+Click **Add file → Upload files**, drag and drop:
+- `index.Rmd`
+- `navbar.html`
+- `header.html`
+- `style.css`
+- `footer.html`
 
-### Step 2 — Upload your files
+Scroll down → **Commit changes**
 
-**Option A — GitHub web interface (no Git needed):**
-1. Open your new repo on GitHub
-2. Click **Add file → Upload files**
-3. Upload all files: `index.Rmd`, `style.css`, `header.html`, `footer.html`
-4. Then create the folder `.github/workflows/` and upload `deploy.yml` inside it
+### Step 3 — Upload the CSV data file
+Click **Add file → Create new file**
+Type in filename box: `data/students.csv` (the `/` creates the folder)
+Paste the contents of `students.csv` → **Commit changes**
 
-**Option B — Git command line:**
-```bash
-git init
-git add .
-git commit -m "Initial commit: Learn R tutorial"
-git branch -M main
-git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPO.git
-git push -u origin main
-```
+### Step 4 — Create the workflow file
+Click **Add file → Create new file**
+Type in filename box: `.github/workflows/deploy.yml`
+Paste the contents of `deploy.yml` → **Commit changes**
 
-### Step 3 — Enable GitHub Pages
+### Step 5 — Enable GitHub Pages
+Go to **Settings → Pages → Source → GitHub Actions** → Save
 
-1. Go to your repo → **Settings** → **Pages** (left sidebar)
-2. Under **Source**, select **GitHub Actions**
-3. Click **Save**
+### Step 6 — Wait ~2 minutes
+Go to **Actions tab** → watch the workflow turn green ✓
 
-### Step 4 — Wait for deployment (~2 minutes)
-
-1. Go to the **Actions** tab in your repo
-2. Watch the **Render & Deploy to GitHub Pages** workflow run
-3. When it shows ✅ green, your site is live!
-
-### Step 5 — Visit your site
-
-```
-https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/
-```
+### Step 7 — Visit your site!
+`https://YOUR-USERNAME.github.io/learn-r/`
 
 ---
 
-## ✏️ How to Add New Content
+## ✏️ Adding New Lessons
 
-Edit `index.Rmd`. The two key helper functions are:
-
-### `example_block(code, id)` — Read-only demo
+Edit `index.Rmd` using two helper functions:
 
 ```r
-```{r results='asis'}
-example_block(
-'x <- c(1, 2, 3)
-mean(x)',
-  id = "my_unique_id"
-)
-```
-```
+# Read-only example (students click Run):
+example_block('mean(c(1,2,3))', id = "ex_unique_id")
 
-### `practice_block(placeholder, id, prompt, hint)` — Student writes code
-
-```r
-```{r results='asis'}
+# Editable practice block:
 practice_block(
-  placeholder = '# Write your code here\n',
+  placeholder = '# your starter code',
   id          = "pr_unique_id",
-  prompt      = "Calculate the mean of c(10, 20, 30).",
-  hint        = "Use <code>mean()</code> on your vector."
+  prompt      = "What should students do?",
+  hint        = "Optional hint with <code>inline code</code>"
 )
 ```
-```
 
-**Important:** Every `id` must be **unique** across the whole document.
-
----
-
-## 🔄 Updating Your Tutorial
-
-Every time you push to the `main` branch, GitHub Actions automatically:
-1. Renders `index.Rmd` → `index.html`
-2. Deploys the new version to GitHub Pages
-
-You never need to run R locally!
+Every `id` must be unique. After editing, commit → Actions auto-redeploys.
 
 ---
 
-## 🎓 Chapters Included
+## 📦 Chapters
 
-| # | Topic |
-|---|---|
-| 1 | Welcome to R |
-| 2 | Arithmetic |
-| 3 | Variables |
-| 4 | Data Types |
-| 5 | Vectors |
-| 6 | Built-in Functions |
-| 7 | Data Frames |
-| 8 | Visualization |
+| # | Topic | # | Topic |
+|---|---|---|---|
+| 1 | Welcome to R | 13 | dplyr Verbs |
+| 2 | Arithmetic | 14 | Pipes & Grouping |
+| 3 | Variables | 15 | ggplot2 Basics |
+| 4 | Data Types | 16 | ggplot2 Advanced |
+| 5 | Vectors | 17 | Load GitHub Data |
+| 6 | Built-in Functions | 18 | Descriptive Statistics |
+| 7 | Data Frames | 19 | Correlation & t-test |
+| 8 | Visualization | 20 | Linear Regression |
+| 9 | If / Else | 21 | Curve Fitting & Plots |
+| 10 | Loops | 22 | 📂 Upload Your Own Data |
+| 11 | Write Functions | | |
+| 12 | Lists | | |
 
 ---
 
 ## 🛠️ Tech Stack
-
-| Tool | Role |
-|---|---|
-| [R Markdown](https://rmarkdown.rstudio.com/) | Document authoring format |
-| [WebR](https://webr.r-wasm.org/) | R engine compiled to WebAssembly, runs in browser |
-| [GitHub Actions](https://github.com/features/actions) | Auto-renders Rmd to HTML on push |
-| [GitHub Pages](https://pages.github.com/) | Free static site hosting |
-
----
+- [R Markdown](https://rmarkdown.rstudio.com/) — document format
+- [WebR](https://webr.r-wasm.org/) — R running in WebAssembly in the browser
+- [GitHub Actions](https://github.com/features/actions) — auto-renders on push
+- [GitHub Pages](https://pages.github.com/) — free static hosting
 
 ## 📄 License
-
-MIT — feel free to use and adapt for your own teaching!
+MIT — free to use and adapt for your own teaching.

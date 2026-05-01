@@ -1694,3 +1694,205 @@ par(mfrow=c(2,2)); plot(m_poly)',
 > **What is next?** Explore [tidymodels](https://www.tidymodels.org/) for machine learning, [Quarto](https://quarto.org/) for publishing, and real datasets on [Kaggle](https://kaggle.com/datasets) and [TidyTuesday](https://github.com/rfordatascience/tidytuesday).
 
 </div>
+
+---
+
+<div class="chapter" id="ch22">
+
+## Upload & Analyse Your Data {.chapter-title}
+
+<span class="ch-badge">CHAPTER 22</span>
+
+Upload any CSV or TSV file from your computer — it gets loaded directly into R running in your browser. Your data never leaves your machine. No server, no account, no upload limit.
+
+> 📂 **Supported formats:** CSV (`.csv`), tab-separated (`.tsv`), plain text (`.txt`). For Excel files, save as CSV first in Excel: **File → Save As → CSV**.
+
+### Step 1 — Upload your file
+
+```{r results='asis'}
+htmltools::HTML('
+<div class="upload-zone" id="drop-zone" onclick="document.getElementById(\'file-input\').click()">
+  <span class="upload-icon">📂</span>
+  <div class="upload-title">Click to choose a file — or drag and drop here</div>
+  <div class="upload-sub">CSV, TSV or TXT &nbsp;·&nbsp; Any size &nbsp;·&nbsp; Stays in your browser</div>
+  <input type="file" id="file-input" accept=".csv,.tsv,.txt"
+         onchange="handleFileUpload(this)" style="display:none">
+  <button class="upload-btn" onclick="event.stopPropagation();document.getElementById(\'file-input\').click()">
+    Choose File
+  </button>
+</div>
+<div id="upload-status" class="upload-status" style="display:none"></div>
+<div class="upload-sub" style="margin-top:4px;font-size:0.78rem;color:var(--ink3);">
+  Preview (first 8 lines):
+</div>
+<pre id="upload-preview" class="file-preview"></pre>
+')
+```
+
+<script>
+// Show status box as soon as file is chosen
+(function() {
+  var orig = window.handleFileUpload;
+  window.handleFileUpload = function(el) {
+    var st = document.getElementById('upload-status');
+    if (st) st.style.display = 'block';
+    if (orig) orig(el);
+  };
+})();
+</script>
+
+### Step 2 — Read the file into R and explore
+
+```{r results='asis'}
+practice_block(
+  placeholder = '# The code below is auto-filled when you upload a file above.
+# You can also edit it manually.
+
+df <- read.csv("/uploads/students.csv", stringsAsFactors = FALSE)
+
+cat("Dimensions:", nrow(df), "rows x", ncol(df), "cols\\n")
+cat("Columns:", paste(names(df), collapse=", "), "\\n\\n")
+head(df)',
+  id = "ch22_run",
+  prompt = "Upload a file above, then click Run to load it into R. The code is auto-generated based on your file.",
+  hint = 'The file path is always <code>/uploads/YOUR_FILENAME.csv</code>. Edit the code to use your actual column names.'
+)
+```
+
+### Step 3 — Descriptive statistics
+
+```{r results='asis'}
+example_block(
+'# Run this AFTER loading your data in Step 2
+# Replace df with your own data frame name if different
+
+summary(df)                           # full statistical overview
+
+# Numeric columns only
+num_cols <- sapply(df, is.numeric)
+if (any(num_cols)) {
+  cat("\\n=== Numeric column stats ===\\n")
+  num_df <- df[, num_cols, drop = FALSE]
+  for (col in names(num_df)) {
+    cat(sprintf("%-20s  mean=%.2f  sd=%.2f  min=%.1f  max=%.1f\\n",
+      col, mean(num_df[[col]], na.rm=TRUE), sd(num_df[[col]], na.rm=TRUE),
+      min(num_df[[col]], na.rm=TRUE), max(num_df[[col]], na.rm=TRUE)))
+  }
+}
+
+# Missing values
+cat("\\n=== Missing values per column ===\\n")
+print(colSums(is.na(df)))',
+  id = "ch22_desc"
+)
+```
+
+### Step 4 — Visualise your data
+
+```{r results='asis'}
+example_block(
+'# Run AFTER Step 2. Replace column names with yours.
+# This example works with the sample students.csv
+
+# Histogram of first numeric column
+num_cols <- names(df)[sapply(df, is.numeric)]
+if (length(num_cols) >= 1) {
+  col1 <- num_cols[1]
+  hist(df[[col1]],
+       main  = paste("Distribution of", col1),
+       xlab  = col1,
+       col   = "steelblue",
+       border= "white",
+       breaks= 12)
+}',
+  id = "ch22_hist"
+)
+```
+
+```{r results='asis'}
+example_block(
+'# Scatter plot of first two numeric columns
+# Run AFTER Step 2
+
+num_cols <- names(df)[sapply(df, is.numeric)]
+if (length(num_cols) >= 2) {
+  x_col <- num_cols[1]
+  y_col <- num_cols[2]
+  plot(df[[x_col]], df[[y_col]],
+       xlab = x_col, ylab = y_col,
+       main = paste(x_col, "vs", y_col),
+       pch  = 16, col = "steelblue", cex = 1.2)
+  abline(lm(df[[y_col]] ~ df[[x_col]]),
+         col = "tomato", lwd = 2)
+  legend("topleft",
+         legend = paste0("r = ", round(cor(df[[x_col]], df[[y_col]], use="complete.obs"), 3)),
+         bty = "n")
+}',
+  id = "ch22_scatter"
+)
+```
+
+### Step 5 — dplyr + ggplot2 on your own data
+
+```{r results='asis'}
+practice_block(
+  placeholder = '# Full tidyverse analysis — edit column names to match YOUR data
+# Run AFTER Step 2
+
+library(dplyr)
+library(ggplot2)
+
+# 1. Quick dplyr summary (edit column names)
+df |>
+  summarise(across(where(is.numeric),
+                   list(mean=~round(mean(.x, na.rm=TRUE), 2),
+                        sd  =~round(sd(.x,   na.rm=TRUE), 2)),
+                   .names = "{.col}_{.fn}"))
+
+# 2. ggplot2 scatter of first two numeric columns
+num_cols <- names(df)[sapply(df, is.numeric)]
+if (length(num_cols) >= 2) {
+  ggplot(df, aes_string(x = num_cols[1], y = num_cols[2])) +
+    geom_point(color = "steelblue", size = 3, alpha = 0.8) +
+    geom_smooth(method = "lm", se = TRUE, color = "tomato") +
+    labs(title = paste(num_cols[2], "vs", num_cols[1]),
+         subtitle = "Linear fit with 95% confidence band") +
+    theme_minimal()
+}',
+  id = "ch22_tidy",
+  prompt = "Run a full dplyr summary and ggplot2 scatter on your uploaded data. Edit the column names to match your file.",
+  hint = 'Use <code>names(df)</code> to see your column names. Replace <code>num_cols[1]</code> and <code>num_cols[2]</code> with your actual column names in quotes, e.g. <code>"age"</code> and <code>"score"</code>.'
+)
+```
+
+### Step 6 — Linear regression on your data
+
+```{r results='asis'}
+practice_block(
+  placeholder = '# Simple regression on your own data
+# Edit column names to match yours — run names(df) first if unsure
+
+num_cols <- names(df)[sapply(df, is.numeric)]
+
+if (length(num_cols) >= 2) {
+  x_name <- num_cols[1]   # predictor  (change to e.g. "study_hours")
+  y_name <- num_cols[2]   # response   (change to e.g. "score_math")
+
+  model <- lm(df[[y_name]] ~ df[[x_name]])
+  cat("=== Regression:", y_name, "~", x_name, "===\\n")
+  cat("Intercept:", round(coef(model)[1], 3), "\\n")
+  cat("Slope:    ", round(coef(model)[2], 3), "\\n")
+  cat("R-squared:", round(summary(model)$r.squared, 4), "\\n\\n")
+  summary(model)
+} else {
+  cat("Need at least 2 numeric columns for regression.\\n")
+}',
+  id = "ch22_reg",
+  prompt = "Fit a linear regression on two numeric columns from your data. Edit <code>x_name</code> and <code>y_name</code> to pick your predictor and response.",
+  hint = 'Run <code>names(df)</code> to see columns, then set e.g. <code>x_name &lt;- "age"</code> and <code>y_name &lt;- "salary"</code> and re-run.'
+)
+```
+
+> 💡 **Tip:** Every analysis block above automatically works on whatever file you upload — just make sure you run **Step 2 first** so `df` is loaded into the R session.
+
+</div>

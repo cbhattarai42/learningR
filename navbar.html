@@ -1,195 +1,300 @@
-<!-- ─── Top Navigation Bar ─────────────────────────────────────────── -->
+<!-- ── Top Navigation Bar ─────────────────────────────────── -->
 <style>
-/* Dropdown mega-menu */
-.nav-group { position: relative; }
-.nav-group-btn {
-  color: rgba(255,255,255,0.65);
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-  padding: 5px 11px;
-  border-radius: 5px;
-  background: none;
-  border: 1px solid transparent;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s;
+/* ── Nav layout ─────────────────────────────────────────── */
+#topnav {
+  position: fixed; top:0; left:0; right:0;
+  background: #0f1117;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  z-index: 9999;
   font-family: 'DM Sans', sans-serif;
-  display: flex; align-items: center; gap: 4px;
 }
-.nav-group-btn:hover { color: #fff; background: rgba(255,255,255,0.07); }
-.nav-group-btn.open  { color: #fff; background: rgba(74,158,247,0.18); border-color: rgba(74,158,247,0.35); }
-.nav-group-btn svg   { opacity: 0.6; transition: transform 0.2s; }
-.nav-group-btn.open svg { transform: rotate(180deg); opacity: 1; }
+#nav-inner {
+  max-width: 1280px; margin: 0 auto;
+  padding: 0 20px;
+  height: 52px;
+  display: flex; align-items: center; gap: 12px;
+}
+/* Brand */
+#nav-brand {
+  display:flex; align-items:center; gap:7px;
+  text-decoration:none; flex-shrink:0; margin-right:4px;
+}
+#brand-r {
+  background:#4A9EF7; color:#fff;
+  font-family:'Lora',serif; font-size:0.9rem; font-weight:700;
+  width:26px; height:26px; border-radius:5px;
+  display:flex; align-items:center; justify-content:center;
+}
+#brand-text { color:#fff; font-size:0.9rem; font-weight:600; white-space:nowrap; }
 
-.nav-dropdown {
-  display: none;
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  background: #181825;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px;
-  padding: 6px 0;
-  min-width: 200px;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
-  z-index: 99999;
+/* Status */
+#nav-status {
+  display:flex; align-items:center; gap:5px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px; padding:3px 10px; flex-shrink:0;
 }
-.nav-dropdown.open { display: block; }
-.nav-dropdown a {
-  display: block;
-  padding: 8px 16px;
-  color: rgba(255,255,255,0.65) !important;
-  text-decoration: none !important;
-  font-size: 0.78rem;
-  transition: all 0.12s;
-  white-space: nowrap;
+#status-txt { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:rgba(255,255,255,0.55); }
+.sdot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.sdot.loading { background:#F0A500; animation:blink 1s infinite; }
+.sdot.ready   { background:#2ECC71; animation:none; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* Section tabs */
+#nav-tabs {
+  display:flex; gap:2px; flex-shrink:0;
+  border-right:1px solid rgba(255,255,255,0.1);
+  padding-right:10px; margin-right:4px;
 }
-.nav-dropdown a:hover { color: #fff !important; background: rgba(255,255,255,0.06); }
-.nav-dropdown a.active { color: #4A9EF7 !important; }
-.nav-dd-divider {
-  border: none; border-top: 1px solid rgba(255,255,255,0.07);
-  margin: 4px 0;
+.ntab {
+  background:none; border:none; cursor:pointer;
+  color:rgba(255,255,255,0.5);
+  font-size:0.72rem; font-weight:600;
+  font-family:'DM Sans',sans-serif;
+  padding:5px 11px; border-radius:5px;
+  letter-spacing:0.03em; white-space:nowrap;
+  transition:all 0.15s;
 }
-.nav-dd-label {
-  display: block;
-  padding: 6px 16px 2px;
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.3);
+.ntab:hover { color:#fff; background:rgba(255,255,255,0.07); }
+.ntab.active { color:#fff; background:rgba(74,158,247,0.22); }
+
+/* Chapter pills */
+#nav-pills { display:flex; align-items:center; gap:3px; overflow-x:auto; flex:1; }
+#nav-pills::-webkit-scrollbar { display:none; }
+.pill-group { display:flex; gap:3px; }
+
+.npill {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:30px; height:26px; padding:0 7px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:5px;
+  color:rgba(255,255,255,0.55) !important;
+  text-decoration:none !important;
+  font-size:0.7rem; font-weight:600;
+  font-family:'JetBrains Mono',monospace;
+  transition:all 0.15s; white-space:nowrap;
+}
+.npill:hover { color:#fff !important; background:rgba(255,255,255,0.12); }
+.npill.active {
+  color:#fff !important;
+  background:rgba(74,158,247,0.3);
+  border-color:rgba(74,158,247,0.6);
+}
+.npill-label { font-size:0.6rem; margin-left:3px; opacity:0.7; }
+
+/* Hamburger */
+#hamburger {
+  display:none; background:none; border:none;
+  color:rgba(255,255,255,0.6); font-size:1.2rem;
+  cursor:pointer; padding:4px 8px; margin-left:auto;
+}
+
+/* Mobile menu */
+#nav-mob {
+  background:#13131F;
+  border-top:1px solid rgba(255,255,255,0.07);
+  max-height:70vh; overflow-y:auto;
+  padding: 8px 0 16px;
+}
+.mob-section {
+  padding:10px 20px 4px;
+  font-size:0.65rem; font-weight:700;
+  letter-spacing:0.1em; text-transform:uppercase;
+  color:rgba(255,255,255,0.35);
+}
+.mob-links { display:flex; flex-wrap:wrap; gap:6px; padding:4px 20px 8px; }
+.mob-links a {
+  color:rgba(255,255,255,0.6) !important;
+  text-decoration:none !important;
+  font-size:0.78rem; padding:4px 10px;
+  border-radius:5px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
+  transition:all 0.12s;
+}
+.mob-links a:hover { color:#fff !important; background:rgba(255,255,255,0.1); }
+
+/* Tooltip */
+#pill-tooltip {
+  position:fixed; background:#1e1e30; color:#CDD6F4;
+  font-size:0.72rem; font-family:'DM Sans',sans-serif;
+  padding:5px 10px; border-radius:5px;
+  border:1px solid rgba(255,255,255,0.12);
+  pointer-events:none; opacity:0;
+  transition:opacity 0.15s; z-index:99999;
+  white-space:nowrap;
+}
+
+/* Reading progress bar */
+#reading-bar {
+  position:fixed; top:52px; left:0; height:2px;
+  background:#4A9EF7; z-index:9998; width:0%;
+  transition:width 0.1s;
+}
+
+@media (max-width: 900px) {
+  #nav-tabs, #nav-pills, #nav-status { display:none; }
+  #hamburger { display:block; }
 }
 </style>
 
 <nav id="topnav">
-  <div id="topnav-inner">
-
+  <div id="nav-inner">
     <a id="nav-brand" href="#ch1">
-      <span id="nav-brand-r">R</span>
-      <span id="nav-brand-text">Learn R</span>
+      <span id="brand-r">R</span>
+      <span id="brand-text">Learn R</span>
     </a>
 
     <div id="nav-status">
-      <span id="nav-dot" class="nav-dot loading"></span>
-      <span id="nav-status-text">Loading R…</span>
+      <span id="status-dot" class="sdot loading"></span>
+      <span id="status-txt">Loading R…</span>
     </div>
 
-    <!-- Desktop nav -->
-    <div id="nav-links">
+    <div id="nav-tabs">
+      <button class="ntab active" data-section="basics"    onclick="showSection('basics')">Basics</button>
+      <button class="ntab"        data-section="tidyverse" onclick="showSection('tidyverse')">Tidyverse</button>
+      <button class="ntab"        data-section="stats"     onclick="showSection('stats')">Statistics</button>
+      <button class="ntab"        data-section="data"      onclick="showSection('data')">📂 Your Data</button>
+    </div>
 
-      <!-- Basics dropdown -->
-      <div class="nav-group" id="grp-basics">
-        <button class="nav-group-btn" onclick="toggleDrop('basics')">
-          Basics
-          <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </button>
-        <div class="nav-dropdown" id="drop-basics">
-          <span class="nav-dd-label">Foundations</span>
-          <a class="nav-link active" href="#ch1"  data-ch="ch1">01 — Welcome to R</a>
-          <a class="nav-link"        href="#ch2"  data-ch="ch2">02 — Arithmetic</a>
-          <a class="nav-link"        href="#ch3"  data-ch="ch3">03 — Variables</a>
-          <a class="nav-link"        href="#ch4"  data-ch="ch4">04 — Data Types</a>
-          <a class="nav-link"        href="#ch5"  data-ch="ch5">05 — Vectors</a>
-          <a class="nav-link"        href="#ch6"  data-ch="ch6">06 — Functions</a>
-          <a class="nav-link"        href="#ch7"  data-ch="ch7">07 — Data Frames</a>
-          <a class="nav-link"        href="#ch8"  data-ch="ch8">08 — Visualization</a>
-          <hr class="nav-dd-divider">
-          <span class="nav-dd-label">Programming</span>
-          <a class="nav-link"        href="#ch9"  data-ch="ch9">09 — If / Else</a>
-          <a class="nav-link"        href="#ch10" data-ch="ch10">10 — Loops</a>
-          <a class="nav-link"        href="#ch11" data-ch="ch11">11 — Write Functions</a>
-          <a class="nav-link"        href="#ch12" data-ch="ch12">12 — Lists</a>
-        </div>
-      </div>
+    <div id="nav-pills">
+      <span class="pill-group" id="grp-basics">
+        <a class="npill active" href="#ch1"  data-ch="ch1">01<span class="npill-label">Welcome</span></a>
+        <a class="npill" href="#ch2"  data-ch="ch2">02<span class="npill-label">Math</span></a>
+        <a class="npill" href="#ch3"  data-ch="ch3">03<span class="npill-label">Vars</span></a>
+        <a class="npill" href="#ch4"  data-ch="ch4">04<span class="npill-label">Types</span></a>
+        <a class="npill" href="#ch5"  data-ch="ch5">05<span class="npill-label">Vectors</span></a>
+        <a class="npill" href="#ch6"  data-ch="ch6">06<span class="npill-label">Fns</span></a>
+        <a class="npill" href="#ch7"  data-ch="ch7">07<span class="npill-label">DFs</span></a>
+        <a class="npill" href="#ch8"  data-ch="ch8">08<span class="npill-label">Plots</span></a>
+        <a class="npill" href="#ch9"  data-ch="ch9">09<span class="npill-label">If/Else</span></a>
+        <a class="npill" href="#ch10" data-ch="ch10">10<span class="npill-label">Loops</span></a>
+        <a class="npill" href="#ch11" data-ch="ch11">11<span class="npill-label">Write Fns</span></a>
+        <a class="npill" href="#ch12" data-ch="ch12">12<span class="npill-label">Lists</span></a>
+      </span>
+      <span class="pill-group" id="grp-tidyverse" style="display:none">
+        <a class="npill" href="#ch13" data-ch="ch13">13<span class="npill-label">dplyr</span></a>
+        <a class="npill" href="#ch14" data-ch="ch14">14<span class="npill-label">Pipes</span></a>
+        <a class="npill" href="#ch15" data-ch="ch15">15<span class="npill-label">ggplot2</span></a>
+        <a class="npill" href="#ch16" data-ch="ch16">16<span class="npill-label">Advanced</span></a>
+      </span>
+      <span class="pill-group" id="grp-stats" style="display:none">
+        <a class="npill" href="#ch17" data-ch="ch17">17<span class="npill-label">GitHub Data</span></a>
+        <a class="npill" href="#ch18" data-ch="ch18">18<span class="npill-label">Desc Stats</span></a>
+        <a class="npill" href="#ch19" data-ch="ch19">19<span class="npill-label">Corr/t-test</span></a>
+        <a class="npill" href="#ch20" data-ch="ch20">20<span class="npill-label">Regression</span></a>
+        <a class="npill" href="#ch21" data-ch="ch21">21<span class="npill-label">Curve Fit</span></a>
+      </span>
+      <span class="pill-group" id="grp-data" style="display:none">
+        <a class="npill" href="#ch22" data-ch="ch22">22<span class="npill-label">📂 Upload</span></a>
+      </span>
+    </div>
 
-      <!-- Tidyverse dropdown -->
-      <div class="nav-group" id="grp-tidy">
-        <button class="nav-group-btn" onclick="toggleDrop('tidy')">
-          Tidyverse
-          <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </button>
-        <div class="nav-dropdown" id="drop-tidy">
-          <span class="nav-dd-label">Data Wrangling</span>
-          <a class="nav-link" href="#ch13" data-ch="ch13">13 — dplyr Verbs</a>
-          <a class="nav-link" href="#ch14" data-ch="ch14">14 — Pipes &amp; Grouping</a>
-          <a class="nav-link" href="#ch15" data-ch="ch15">15 — ggplot2 Basics</a>
-          <a class="nav-link" href="#ch16" data-ch="ch16">16 — ggplot2 Advanced</a>
-        </div>
-      </div>
-
-      <!-- Stats & Data dropdown -->
-      <div class="nav-group" id="grp-stats">
-        <button class="nav-group-btn" onclick="toggleDrop('stats')">
-          Statistics
-          <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </button>
-        <div class="nav-dropdown" id="drop-stats">
-          <span class="nav-dd-label">Real Data</span>
-          <a class="nav-link" href="#ch17" data-ch="ch17">17 — Load Data from GitHub</a>
-          <a class="nav-link" href="#ch18" data-ch="ch18">18 — Descriptive Statistics</a>
-          <hr class="nav-dd-divider">
-          <span class="nav-dd-label">Inference &amp; Modelling</span>
-          <a class="nav-link" href="#ch19" data-ch="ch19">19 — Correlation &amp; t-test</a>
-          <a class="nav-link" href="#ch20" data-ch="ch20">20 — Linear Regression</a>
-          <a class="nav-link" href="#ch21" data-ch="ch21">21 — Curve Fitting &amp; Plots</a>
-        </div>
-      </div>
-
-    </div><!-- /nav-links -->
-
-    <button id="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
+    <button id="hamburger" onclick="toggleMob()">☰</button>
   </div>
 
-  <!-- Mobile menu -->
-  <div id="nav-mobile" style="display:none;">
-    <a class="nav-mob-link" href="#ch1"  onclick="closeMobileMenu()">01 Welcome to R</a>
-    <a class="nav-mob-link" href="#ch2"  onclick="closeMobileMenu()">02 Arithmetic</a>
-    <a class="nav-mob-link" href="#ch3"  onclick="closeMobileMenu()">03 Variables</a>
-    <a class="nav-mob-link" href="#ch4"  onclick="closeMobileMenu()">04 Data Types</a>
-    <a class="nav-mob-link" href="#ch5"  onclick="closeMobileMenu()">05 Vectors</a>
-    <a class="nav-mob-link" href="#ch6"  onclick="closeMobileMenu()">06 Functions</a>
-    <a class="nav-mob-link" href="#ch7"  onclick="closeMobileMenu()">07 Data Frames</a>
-    <a class="nav-mob-link" href="#ch8"  onclick="closeMobileMenu()">08 Visualization</a>
-    <a class="nav-mob-link" href="#ch9"  onclick="closeMobileMenu()">09 If / Else</a>
-    <a class="nav-mob-link" href="#ch10" onclick="closeMobileMenu()">10 Loops</a>
-    <a class="nav-mob-link" href="#ch11" onclick="closeMobileMenu()">11 Write Functions</a>
-    <a class="nav-mob-link" href="#ch12" onclick="closeMobileMenu()">12 Lists</a>
-    <a class="nav-mob-link" href="#ch13" onclick="closeMobileMenu()">13 dplyr Verbs</a>
-    <a class="nav-mob-link" href="#ch14" onclick="closeMobileMenu()">14 Pipes &amp; Grouping</a>
-    <a class="nav-mob-link" href="#ch15" onclick="closeMobileMenu()">15 ggplot2 Basics</a>
-    <a class="nav-mob-link" href="#ch16" onclick="closeMobileMenu()">16 ggplot2 Advanced</a>
-    <a class="nav-mob-link" href="#ch17" onclick="closeMobileMenu()">17 Load Data from GitHub</a>
-    <a class="nav-mob-link" href="#ch18" onclick="closeMobileMenu()">18 Descriptive Statistics</a>
-    <a class="nav-mob-link" href="#ch19" onclick="closeMobileMenu()">19 Correlation &amp; t-test</a>
-    <a class="nav-mob-link" href="#ch20" onclick="closeMobileMenu()">20 Linear Regression</a>
-    <a class="nav-mob-link" href="#ch21" onclick="closeMobileMenu()">21 Curve Fitting &amp; Plots</a>
+  <div id="nav-mob" style="display:none">
+    <div class="mob-section">Basics — Ch 1–12</div>
+    <div class="mob-links">
+      <a href="#ch1"  onclick="closeMob()">01 Welcome</a>
+      <a href="#ch2"  onclick="closeMob()">02 Arithmetic</a>
+      <a href="#ch3"  onclick="closeMob()">03 Variables</a>
+      <a href="#ch4"  onclick="closeMob()">04 Data Types</a>
+      <a href="#ch5"  onclick="closeMob()">05 Vectors</a>
+      <a href="#ch6"  onclick="closeMob()">06 Functions</a>
+      <a href="#ch7"  onclick="closeMob()">07 Data Frames</a>
+      <a href="#ch8"  onclick="closeMob()">08 Visualization</a>
+      <a href="#ch9"  onclick="closeMob()">09 If / Else</a>
+      <a href="#ch10" onclick="closeMob()">10 Loops</a>
+      <a href="#ch11" onclick="closeMob()">11 Write Functions</a>
+      <a href="#ch12" onclick="closeMob()">12 Lists</a>
+    </div>
+    <div class="mob-section">Tidyverse — Ch 13–16</div>
+    <div class="mob-links">
+      <a href="#ch13" onclick="closeMob()">13 dplyr Verbs</a>
+      <a href="#ch14" onclick="closeMob()">14 Pipes &amp; Grouping</a>
+      <a href="#ch15" onclick="closeMob()">15 ggplot2 Basics</a>
+      <a href="#ch16" onclick="closeMob()">16 ggplot2 Advanced</a>
+    </div>
+    <div class="mob-section">Statistics — Ch 17–21</div>
+    <div class="mob-links">
+      <a href="#ch17" onclick="closeMob()">17 Load GitHub Data</a>
+      <a href="#ch18" onclick="closeMob()">18 Descriptive Stats</a>
+      <a href="#ch19" onclick="closeMob()">19 Correlation &amp; t-test</a>
+      <a href="#ch20" onclick="closeMob()">20 Linear Regression</a>
+      <a href="#ch21" onclick="closeMob()">21 Curve Fitting</a>
+    </div>
+    <div class="mob-section">Your Data — Ch 22</div>
+    <div class="mob-links">
+      <a href="#ch22" onclick="closeMob()">22 📂 Upload &amp; Analyse</a>
+    </div>
   </div>
 </nav>
 
+<div id="pill-tooltip"></div>
+<div id="reading-bar"></div>
+
 <script>
-function toggleDrop(id) {
-  var btn  = document.querySelector('#grp-' + id + ' .nav-group-btn');
-  var drop = document.getElementById('drop-' + id);
-  var isOpen = drop.classList.contains('open');
-  /* close all first */
-  document.querySelectorAll('.nav-dropdown').forEach(function(d){ d.classList.remove('open'); });
-  document.querySelectorAll('.nav-group-btn').forEach(function(b){ b.classList.remove('open'); });
-  if (!isOpen) { drop.classList.add('open'); btn.classList.add('open'); }
-}
-/* close dropdowns when clicking outside */
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.nav-group')) {
-    document.querySelectorAll('.nav-dropdown').forEach(function(d){ d.classList.remove('open'); });
-    document.querySelectorAll('.nav-group-btn').forEach(function(b){ b.classList.remove('open'); });
-  }
-});
-function toggleMobileMenu() {
-  var m = document.getElementById('nav-mobile');
-  m.style.display = m.style.display === 'none' ? 'block' : 'none';
-}
-function closeMobileMenu() {
-  document.getElementById('nav-mobile').style.display = 'none';
-}
+(function() {
+  var chNames = {
+    ch1:"Welcome to R", ch2:"Arithmetic", ch3:"Variables",
+    ch4:"Data Types", ch5:"Vectors", ch6:"Built-in Functions",
+    ch7:"Data Frames", ch8:"Visualization", ch9:"If / Else",
+    ch10:"Loops", ch11:"Write Functions", ch12:"Lists",
+    ch13:"dplyr Verbs", ch14:"Pipes & Grouping",
+    ch15:"ggplot2 Basics", ch16:"ggplot2 Advanced",
+    ch17:"Load GitHub Data", ch18:"Descriptive Statistics",
+    ch19:"Correlation & t-test", ch20:"Linear Regression",
+    ch21:"Curve Fitting", ch22:"Upload & Analyse Your Data"
+  };
+
+  window.showSection = function(name) {
+    document.querySelectorAll('.ntab').forEach(function(t) { t.classList.remove('active'); });
+    var tab = document.querySelector('.ntab[data-section="'+name+'"]');
+    if (tab) tab.classList.add('active');
+    document.querySelectorAll('.pill-group').forEach(function(g) { g.style.display = 'none'; });
+    var grp = document.getElementById('grp-'+name);
+    if (grp) grp.style.display = '';
+  };
+
+  window._lastSection = 'basics';
+  window.syncNav = function(chId) {
+    var num = parseInt(chId.replace('ch',''));
+    var sec = num <= 12 ? 'basics' : num <= 16 ? 'tidyverse' : num <= 21 ? 'stats' : 'data';
+    if (sec !== window._lastSection) { showSection(sec); window._lastSection = sec; }
+    document.querySelectorAll('.npill').forEach(function(p) { p.classList.remove('active'); });
+    var pill = document.querySelector('.npill[data-ch="'+chId+'"]');
+    if (pill) pill.classList.add('active');
+  };
+
+  // Tooltips
+  document.querySelectorAll('.npill').forEach(function(p) {
+    var tt = document.getElementById('pill-tooltip');
+    p.addEventListener('mouseenter', function(e) {
+      tt.textContent = chNames[p.dataset.ch] || '';
+      tt.style.opacity = '1';
+      var r = p.getBoundingClientRect();
+      tt.style.left = r.left + 'px';
+      tt.style.top  = (r.bottom + 6) + 'px';
+    });
+    p.addEventListener('mouseleave', function() { tt.style.opacity = '0'; });
+  });
+
+  window.toggleMob = function() {
+    var m = document.getElementById('nav-mob');
+    m.style.display = m.style.display === 'none' ? 'block' : 'none';
+  };
+  window.closeMob = function() {
+    document.getElementById('nav-mob').style.display = 'none';
+  };
+
+  // Reading progress
+  window.addEventListener('scroll', function() {
+    var el = document.documentElement;
+    var pct = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100;
+    var bar = document.getElementById('reading-bar');
+    if (bar) bar.style.width = pct + '%';
+  });
+})();
 </script>
